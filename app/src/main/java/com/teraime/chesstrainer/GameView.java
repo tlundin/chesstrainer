@@ -24,7 +24,7 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
     public GameView(Context context) {
 
         this.context = context;
-
+        final Board board = new Board(Board.ScaleOptions.MAX, Board.StyleOptions.plain, Board.StyleOptions.fancy,500);
 
     }
     String TAG = "beboop";

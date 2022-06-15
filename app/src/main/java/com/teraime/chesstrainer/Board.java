@@ -6,22 +6,31 @@ import android.graphics.Rect;
 public class Board
 {
     BoxOfChessMen set = new BoxOfChessMen();
-    final ScaleOptions mSize;
     final StyleOptions pieceStyle,boardStyle;
+    final static float border_thickness_as_percentage = .10f;
 
-    public Board(ScaleOptions mSize, StyleOptions boardStyle, StyleOptions pieceStyle, int size_with_borders) {
-        final float border_thickness_as_percentage = .10f;
-        float sizef = scale(size_with_borders);
-        this.mSize = mSize;
+    public Board(ScaleOptions scaleOption, StyleOptions boardStyle, StyleOptions pieceStyle, int size_with_borders) {
+        int _size = scale(size_with_borders,scaleOption);
+        int border_thickness = (int) (_size*border_thickness_as_percentage);
         this.pieceStyle = pieceStyle;
         this.boardStyle = boardStyle;
-        Rect bg = new Rect(0,0,sizes,sizes);
+        Rect bg = new Rect(0,0,_size,_size);
         Rect L_Edge = new Rect(0,0,border_thickness,_size);
         Rect R_Edge = new Rect(0,0,border_thickness,_size);
+        Rect B_Edge = new Rect(0,0,_size,border_thickness);
+        Rect T_Edge = new Rect(0,0,_size,border_thickness);
     }
 
-    int _size = (int)sizef;
-    int border_thickness = (int) (w*border_thickness_as_percentage);
+    private int scale(int size,ScaleOptions scaleOption) {
+        switch (scaleOption) {
+            case MAX:
+            default:
+                return size;
+        }
+    }
+
+
+
     public enum StyleOptions {
         plain,
         fancy
