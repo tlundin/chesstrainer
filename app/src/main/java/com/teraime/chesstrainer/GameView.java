@@ -24,7 +24,6 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
     public GameView(Context context) {
 
         this.context = context;
-        final Board board = new Board(Board.ScaleOptions.MAX, Board.StyleOptions.plain, Board.StyleOptions.fancy,500);
 
     }
     String TAG = "beboop";
@@ -32,12 +31,16 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
     @Override
     public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
         Log.d(TAG,"Surf is good");
-        tryDrawing(surfaceHolder);
+        //tryDrawing(surfaceHolder);
+        final Board board = new Board(Board.ScaleOptions.MAX, Board.StyleOptions.plain, Board.StyleOptions.fancy,surfaceHolder.getSurfaceFrame().width());
+        Canvas canvas = surfaceHolder.lockCanvas();
+        board.onDraw(canvas);
+        surfaceHolder.unlockCanvasAndPost(canvas);
+
     }
 
     @Override
     public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-        tryDrawing(surfaceHolder);
     }
 
     @Override
