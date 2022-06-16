@@ -1,6 +1,8 @@
 package com.teraime.chesstrainer;
 
 
+import static com.teraime.chesstrainer.ChessConstants.TWO_PAWN_BOARD;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -20,6 +22,7 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
 
 
     private final Context context;
+    private Board board;
 
     public GameView(Context context) {
 
@@ -32,8 +35,12 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
     public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
         Log.d(TAG,"Surf is good");
         //tryDrawing(surfaceHolder);
-        final Board board = new Board(Board.ScaleOptions.MAX, Board.StyleOptions.plain, Board.StyleOptions.fancy,surfaceHolder.getSurfaceFrame().width());
+        board = new Board(context,Board.ScaleOptions.MAX, Board.StyleOptions.plain, Board.StyleOptions.fancy,surfaceHolder.getSurfaceFrame().width());
         Canvas canvas = surfaceHolder.lockCanvas();
+
+        ChessPosition pos = new ChessPosition(TWO_PAWN_BOARD);//new ChessPosition(GameState.convertFenToBoard(ChessConstants.FEN_STARTING_POSITION));
+        pos.print();
+        board.setupPosition(pos);
         board.onDraw(canvas);
         surfaceHolder.unlockCanvasAndPost(canvas);
 
@@ -60,13 +67,12 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
             holder.unlockCanvasAndPost(canvas);
         }
     }
-    private Rect mRect;
+
     private void drawMyStuff(final Canvas canvas) {
         Random random = new Random();
         Log.i(TAG, "Drawing...");
         Paint p = new Paint();
         Rect r = new Rect(0,0,64,64);
-        mRect=r;
         Bitmap bmp = BitmapFactory.decodeResource(context.getResources(),R.drawable.b_king);
 
         canvas.drawBitmap(bmp,null,r,p);
@@ -83,9 +89,8 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
             case MotionEvent.ACTION_DOWN:
                 int x = (int)motionEvent.getX();
                 int y = (int)motionEvent.getY();
-                if (mRect.contains(x,y))
-                    Log.d(TAG,"clickclock");
                 Log.d(TAG,"x: "+x+"y:"+y);
+                board.dragIfPiece(x,y);
                 break;
             case MotionEvent.ACTION_UP:
                 view.performClick();
