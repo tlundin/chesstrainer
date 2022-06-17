@@ -1,8 +1,5 @@
 package com.teraime.chesstrainer;
 
-import com.teraime.chesstrainer.Types.Cord;
-
-
 public class BasicMove {
 
 		protected Cord from,to;
@@ -17,19 +14,19 @@ public class BasicMove {
 		}
 		
 		
-		public int getFromX() {
+		public int getFromColumn() {
 			return from.column;
 		}
 		
-		public int getFromY() {
+		public int getFromRow() {
 			return from.row;
 		}
 		
-		public int getToX() {
+		public int getToColumn() {
 			return to.column;
 		}
 		
-		public int getToY() {
+		public int getToRow() {
 			return to.row;
 		}
 		
@@ -43,5 +40,9 @@ public class BasicMove {
 			return (this.from.equals(mother.from)&&
 					this.to.equals(mother.to));
 		}
+
+	public Cord getFromCord() {
+			return from;
+	}
 }
 

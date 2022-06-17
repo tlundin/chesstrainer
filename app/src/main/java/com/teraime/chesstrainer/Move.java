@@ -1,5 +1,4 @@
 package com.teraime.chesstrainer;
-import com.teraime.chesstrainer.Types.Cord;
 
 public class Move extends BasicMove {
 	
@@ -18,11 +17,8 @@ public class Move extends BasicMove {
 	private final static String[] xs = {"a","b","c","d","e","f","g","h"};
 	private final static String[] ys = {"8","7","6","5","4","3","2","1"};
 	
-	public Move() {
-		
-	}
-	
-	public Move(Types.Cord from, Cord to) {
+
+	public Move(Cord from, Cord to) {
 		super(from,to);
 	}
 	public Move(int fromX, int fromY, int toX, int toY) {
@@ -53,26 +49,26 @@ public class Move extends BasicMove {
 	
 	public String getNotation() {
 		if(Move.exchangeF==moveType) 
-			return getFromX()<getToX()?"O-O":"O-O-O";
+			return getFromColumn()< getToRow()?"O-O":"O-O-O";
 		else
 			return getShortNotation();
 	}
 	
 	public String getLongNotation() {
-		return printPiece(pieceId)+xs[getFromX()]+ys[getFromY()]+
-		(slag?"x":"-")+xs[getToX()]+ys[getToY()]+(promotePiece==ChessConstants.B_EMPTY?"":"="+printPiece(promotePiece))+(check?"+":"");
+		return printPiece(pieceId)+xs[getFromColumn()]+ys[getFromRow()]+
+		(slag?"x":"-")+xs[getToRow()]+ys[getToRow()]+(promotePiece==ChessConstants.B_EMPTY?"":"="+printPiece(promotePiece))+(check?"+":"");
 	}
 	
 	public String getShortNotation() {
-		return printPiece(pieceId)+(disx?xs[getFromX()]:"")+(disy?ys[getFromY()]:"")+(slag?"x":"")+xs[getToX()]+ys[getToY()]+(promotePiece==ChessConstants.B_EMPTY?"":"="+printPiece(promotePiece))+(check?"+":"");
+		return printPiece(pieceId)+(disx?xs[getFromColumn()]:"")+(disy?ys[getFromRow()]:"")+(slag?"x":"")+xs[getToRow()]+ys[getToRow()]+(promotePiece==ChessConstants.B_EMPTY?"":"="+printPiece(promotePiece))+(check?"+":"");
 	}
 	//ChessConstants.pieceShortName[pieceId]
 	public String getRawNotation() {
-		return(xs[getFromX()]+ys[getFromY()]+xs[getToX()]+ys[getToY()]+(promotePiece==ChessConstants.B_EMPTY?"":"="+ChessConstants.pieceShortName[promotePiece]));	
+		return(xs[getFromColumn()]+ys[getFromRow()]+xs[getToRow()]+ys[getToRow()]+(promotePiece==ChessConstants.B_EMPTY?"":"="+ChessConstants.pieceShortName[promotePiece]));
 	}
 	
 	public String getShortNoFancy() {
-		return ChessConstants.pieceShortName[pieceId]+(disx?xs[getFromX()]:"")+(disy?ys[getFromY()]:"")+(slag?"x":"")+xs[getToX()]+ys[getToY()]+
+		return ChessConstants.pieceShortName[pieceId]+(disx?xs[getFromColumn()]:"")+(disy?ys[getFromRow()]:"")+(slag?"x":"")+xs[getToRow()]+ys[getToRow()]+
 		(promotePiece==ChessConstants.B_EMPTY?"":"="+ChessConstants.pieceShortName[promotePiece])+(check?"+":"");
 	}
 	

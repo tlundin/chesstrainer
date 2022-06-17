@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.database.SQLException;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -17,6 +18,8 @@ import android.view.WindowInsets;
 import android.widget.Button;
 
 import com.teraime.chesstrainer.databinding.ActivityFullscreenBinding;
+
+import java.io.IOException;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -91,9 +94,12 @@ public class FullscreenActivity extends AppCompatActivity {
 
         mContentView = binding.chessBg;
         Button flipButton = binding.flip;
+        Button testButton = binding.test;
+        Button resetButton = binding.reset;
 
         SurfaceView sf = (SurfaceView)mContentView;
-        GameView game = new GameView(this);
+
+        GameView game = new GameView(this,createDB());
         sf.getHolder().addCallback(game);
         sf.setOnClickListener(game);
         sf.setOnTouchListener(game);
@@ -103,17 +109,19 @@ public class FullscreenActivity extends AppCompatActivity {
                 game.onFlipClick();
             }
         });
-        // Set up the user interaction to manually show or hide the system UI.
-        //mContentView.setOnClickListener(new View.OnClickListener() {
-          //  @Override
-          //  public void onClick(View view) {
-          //      toggle();
-          //  }
-        //});
+        testButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _view) {
+                game.onTestClick();
+            }
+        });
+        resetButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _view) {
+                game.onResetClick();
+            }
+        });
 
-        // Upon interacting with UI controls, delay any scheduled hide()
-        // operations to prevent the jarring behavior of controls going away
-        // while interacting with the UI.
 
     }
 
@@ -149,5 +157,20 @@ public class FullscreenActivity extends AppCompatActivity {
     private void delayedHide(int delayMillis) {
         mHideHandler.removeCallbacks(mHideRunnable);
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
+    }
+
+    private MySQLiteHelper createDB() {
+        MySQLiteHelper myDBH = new MySQLiteHelper(this.getApplicationContext());
+        try {
+            myDBH.createDataBase();
+        } catch (IOException e) {
+            throw new Error("Unable to create database");
+        }
+        try {
+            myDBH.openDataBase();
+        } catch (SQLException e) {
+            throw e;
+        }
+        return myDBH;
     }
 }

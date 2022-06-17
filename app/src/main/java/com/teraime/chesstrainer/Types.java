@@ -39,33 +39,7 @@ public abstract class Types {
 	 
 
 	 
-	public static class Cord {
 
-		public int column;
-		public int row;
-
-		public Cord(int column, int row) {
-			this.column=column;
-			this.row=row;
-		}
-
-		public Cord(int location) {
-			row = location/8;
-			column = location - row*8;
-			
-		}
-
-		@Override
-		public boolean equals(Object other) {
-			if (other == null) return false;
-		    if (other == this) return true;
-		    if (!(other instanceof Cord))return false;
-		    Cord mother = (Cord)other;
-			return (this.column==mother.column&&
-					this.row==mother.row);
-		}
-		
-	}
 	public static enum ProblemType {
 		TACTICS,GAME,
 	}

@@ -1,11 +1,14 @@
 package com.teraime.chesstrainer;
 
+import static com.teraime.chesstrainer.PathFactory.Type.Linear;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.os.Looper;
@@ -24,20 +27,25 @@ public class Board
     final Bitmap edgeHorisontal,edgeVertical,w_square,b_square;
     final Bitmap w_knight,w_bishop,w_king,w_rook,w_pawn,w_queen;
     final Bitmap b_knight,b_bishop,b_king,b_rook,b_pawn,b_queen;
+
     final Bitmap[] pieceBox;
     final Boolean hasEdge;
     final Rect[] squares;
     final int border_thickness,gridSize;
     private ChessPosition mPosition=null;
     private boolean isFlipped=false;
-    private Position movingPieceInitialPosition,Outside;
+    private Cord movingPieceInitialPosition,Outside;
+    private Bitmap movingPieceBmp;
+    private Rect movingRect;
+    private SurfaceHolderCallback surfer;
 
-    public Board(Context context, ScaleOptions scaleOption, StyleOptions boardStyle, StyleOptions pieceStyle, int size_with_borders) {
+    public Board(Context context, ScaleOptions scaleOption, StyleOptions boardStyle, StyleOptions pieceStyle, int size_with_borders, SurfaceHolderCallback surfh) {
         int _size = scale(size_with_borders,scaleOption);
         this.pieceStyle = pieceStyle;
         this.boardStyle = boardStyle;
+        surfer = surfh;
         boardRect = new Rect(0,0,_size,_size);
-        Outside = new Position(-1,-1);
+        Outside = new Cord(-1,-1);
         movingPieceInitialPosition =Outside;
         switch (boardStyle) {
             case oak:
@@ -66,7 +74,7 @@ public class Board
         b_square = BitmapFactory.decodeResource(context.getResources(),R.drawable.dark_square_wood);
         int top = 0;int left=0;int bottom=0;int right=0;
         int i=0;
-        int square_size = gridSize/8;
+        int square_size = getSquareSize();
         for(int row=0; row<8 ; row++) {
             for (int column=0; column<8 ; column++) {
                 left   = border_thickness+column*square_size;
@@ -108,12 +116,13 @@ public class Board
     }
 
     public void setupPosition(ChessPosition position) {
+        isFlipped=false;
         mPosition = position;
     }
 
     public int dragIfPiece(int x, int y) {
         if (isInside(x,y)) {
-            Position p = calculateColRow(x,y);
+            Cord p = calculateColRow(x,y);
             Log.d("x","col:"+p.getColumn()+" row:"+p.getRow());
             int piece = mPosition.get(p.getColumn(),p.getRow());
             if (piece != ChessConstants.B_EMPTY) {
@@ -124,25 +133,30 @@ public class Board
         return -1;
     }
 
-    private Position calculateColRow(int x, int y) {
+    private Cord calculateColRow(int x, int y) {
         int column = (x-border_thickness)/getSquareSize();
         int row = (y-border_thickness)/getSquareSize();
         int fliprow = isFlipped?7-row:row;
-        return new Position(column,fliprow);
+        return new Cord(column,fliprow);
     }
-    private Position calculateXY(int col, int row) {
+    private Point calculateXYFromGrid(int col, int row) {
+        int fliprow = isFlipped?7-row:row;
         int x = col*getSquareSize()+border_thickness;
-        int y = row*getSquareSize()+border_thickness;
-        return new Position(x,y);
+        int y = fliprow*getSquareSize()+border_thickness;
+        return new Point(x,y);
     }
 
-    public void dropDraggedPiece(int x, int y, int piece) {
+    public void dropMovingPiece(Point dropPoint, int piece) {
+        int x = dropPoint.x;
+        int y = dropPoint.y;
         if (isInside(x,y)) {
-            Position p = calculateColRow(x, y);
+            Cord p = calculateColRow(x, y);
             mPosition.put(movingPieceInitialPosition.getColumn(), movingPieceInitialPosition.getRow(), ChessConstants.B_EMPTY);
             mPosition.put(p.getColumn(), p.getRow(), piece);
         }
         movingPieceInitialPosition = Outside;
+        movingRect = null;
+        movingPieceBmp = null;
     }
 
     public boolean isInside(int x, int y) {
@@ -153,7 +167,10 @@ public class Board
         return gridSize/8;
     }
 
-
+    public void initialiseMoveRect(Rect dragRect, Bitmap draggedPieceBmp) {
+        movingRect=dragRect;
+        movingPieceBmp=draggedPieceBmp;
+    }
 
 
     public enum StyleOptions {
@@ -173,17 +190,43 @@ public class Board
         isFlipped = !isFlipped;
     }
 
-    public void move(int colFrom,int rowFrom, int colTo, int rowTo) {
+    public void move(Move move, MoveCallBack_I cb) {
+        surfer.moveIsActive();
        final Handler moveHandler = new Handler(Looper.myLooper());
-       Bitmap piecebmp = pieceBox[mPosition.get(colFrom,rowFrom)];
-       Position p = calculateXY(colFrom,rowFrom);
-       movingPieceInitialPosition=p;
+       movingPieceInitialPosition=move.getFromCord();
+       final Point movingPiecePosition=calculateXYFromGrid(move.getFromColumn(),move.getFromRow());
+       final Point movingPieceDestination=calculateXYFromGrid(move.getToColumn(),move.getToRow());
+       int movingPieceId = mPosition.get(move.getFromColumn(),move.getFromRow());
+       movingPieceBmp = pieceBox[movingPieceId];
+       int squareSize = getSquareSize();
+       movingRect = new Rect(0,0,squareSize,squareSize);
+       Point[] pointsOnTheWay = PathFactory.generate(Linear,movingPiecePosition,movingPieceDestination);
+
        moveHandler.post(new Runnable() {
+           int count = 0;
            @Override
            public void run() {
-
+               while(count<pointsOnTheWay.length) {
+                   movePieceTo(pointsOnTheWay[count]);
+                   invalidateView();
+                   count++;
+               }
+               dropMovingPiece(movingPieceDestination, movingPieceId);
+               surfer.moveIsDone();
+               cb.onMoveDone();
+               invalidateView();
            }
        });
+    }
+
+
+
+    public void movePieceTo(Point point) {
+        movingRect.offsetTo(point.x,point.y);
+    }
+
+    private void invalidateView() {
+        surfer.surfaceChanged();
     }
 
     public void onDraw(Canvas c) {
@@ -203,12 +246,17 @@ public class Board
                     square = (square == w_square) ? b_square : w_square;
                     c.drawBitmap(square, null, squares[i], p);
                     int flip_row = isFlipped ? 7 - row : row;
+                    //Don't draw The moving piece
                     if (!mPosition.isEmpty(column, flip_row))
                         if (!movingPieceInitialPosition.equals(column, flip_row))
                             c.drawBitmap(pieceBox[mPosition.get(column, flip_row)], null, squares[i], p);
                     i++;
                 }
             }
+            if(movingRect!=null) {
+                c.drawBitmap(movingPieceBmp,null,movingRect,p);
+            }
+
         }
 
     }
