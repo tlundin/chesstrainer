@@ -201,7 +201,6 @@ public class Board
        int squareSize = getSquareSize();
        movingRect = new Rect(0,0,squareSize,squareSize);
        Point[] pointsOnTheWay = PathFactory.generate(Linear,movingPiecePosition,movingPieceDestination);
-
        moveHandler.post(new Runnable() {
            int count = 0;
            @Override

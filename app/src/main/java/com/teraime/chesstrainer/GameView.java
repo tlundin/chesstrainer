@@ -148,28 +148,33 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
         board.setupPosition(gs.getPosition());
         if (!gs.whiteToMove)
             board.flip();
-        final GameState newState = ml.getCurrentPosition();
-        final Move moveThatLeadHere = newState.getMove();
-        
-        board.move(moveThatLeadHere,new MoveCallBack_I() {
-            @Override
-            public void onMoveDone() {
-                Log.d("schack","move done. Now waiting for player input");
-                int result = newState.checkForEndConditions();
-                if (result!=GameResult.NORMAL) {
-                    if (result == GameResult.MATE) {
-                        Log.d("schack","Computer won!");
-                    }
-                    else {
-                        Log.d("schack","Stale mate!");
-                    }
 
+        if(ml.goForward()) {
+            Move moveThatLeadHere = ml.getCurrentPosition().getMove();
+            GameState newState = ml.getCurrentPosition();
+            board.move(moveThatLeadHere, new MoveCallBack_I() {
+                @Override
+                public void onMoveDone() {
+                    Log.d("schack", "move done. Now waiting for player input");
+                    int result = newState.checkForEndConditions();
+                    if (result != GameResult.NORMAL) {
+                        if (result == GameResult.MATE) {
+                            Log.d("schack", "Computer won!");
+                        } else {
+                            Log.d("schack", "Stale mate!");
+                        }
+
+                    } else if (newState.checkIfDraw(!newState.whiteToMove)) {
+                        Log.d("schack", "NO WAY TO WIN");
+                    } else
+                        MoveCallBack_I playerMovedCb = new MoveCallBack_I() {
+                            public void onMoveDone() {
+
+                            }
+                        }
                 }
-                else if(newState.checkIfDraw(!newState.whiteToMove)) {
-                    Log.d("schack","NO WAY TO WIN");
-                }
-            }
-        });
+            });
+        }
     }
 
     public void onResetClick() {
