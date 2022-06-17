@@ -1,6 +1,7 @@
 package com.teraime.chesstrainer;
 
 
+import static com.teraime.chesstrainer.ChessConstants.INITIAL_BOARD;
 import static com.teraime.chesstrainer.ChessConstants.TWO_PAWN_BOARD;
 
 import android.content.Context;
@@ -23,6 +24,7 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
 
     private final Context context;
     private Board board;
+    private SurfaceHolder mSurfaceHolder = null;
 
     public GameView(Context context) {
 
@@ -34,20 +36,20 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
     @Override
     public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
         Log.d(TAG,"Surf is good");
-        //tryDrawing(surfaceHolder);
+        mSurfaceHolder=surfaceHolder;
         board = new Board(context,Board.ScaleOptions.MAX, Board.StyleOptions.plain, Board.StyleOptions.fancy,surfaceHolder.getSurfaceFrame().width());
-        Canvas canvas = surfaceHolder.lockCanvas();
-
-        ChessPosition pos = new ChessPosition(TWO_PAWN_BOARD);//new ChessPosition(GameState.convertFenToBoard(ChessConstants.FEN_STARTING_POSITION));
+        ChessPosition pos = new ChessPosition(INITIAL_BOARD);//new ChessPosition(GameState.convertFenToBoard(ChessConstants.FEN_STARTING_POSITION));
         pos.print();
         board.setupPosition(pos);
-        board.onDraw(canvas);
-        surfaceHolder.unlockCanvasAndPost(canvas);
+        Canvas c = mSurfaceHolder.lockCanvas();
+        board.onDraw(c);
+        mSurfaceHolder.unlockCanvasAndPost(c);
 
     }
 
     @Override
     public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+
     }
 
     @Override
@@ -55,49 +57,66 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
 
     }
 
-    private void tryDrawing(SurfaceHolder holder) {
-        Log.i(TAG, "Trying to draw...");
 
-        Canvas canvas = holder.lockCanvas();
 
-        if (canvas == null) {
-            Log.e(TAG, "Cannot draw onto the canvas as it's null");
-        } else {
-            drawMyStuff(canvas);
-            holder.unlockCanvasAndPost(canvas);
-        }
-    }
-
-    private void drawMyStuff(final Canvas canvas) {
-        Random random = new Random();
-        Log.i(TAG, "Drawing...");
-        Paint p = new Paint();
-        Rect r = new Rect(0,0,64,64);
-        Bitmap bmp = BitmapFactory.decodeResource(context.getResources(),R.drawable.b_king);
-
-        canvas.drawBitmap(bmp,null,r,p);
-    }
 
     @Override
     public void onClick(View view) {
         Log.d(TAG,"pluck");
     }
 
+    Bitmap draggedPieceBmp;
+    boolean dragActive = false;
+    int draggedPiece;
+    Rect dragRect;
+    Paint p = new Paint();
+
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
+        int x = (int)motionEvent.getX();
+        int y = (int)motionEvent.getY();
         switch (motionEvent.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                int x = (int)motionEvent.getX();
-                int y = (int)motionEvent.getY();
                 Log.d(TAG,"x: "+x+"y:"+y);
-                board.dragIfPiece(x,y);
+                draggedPiece = board.dragIfPiece(x,y);
+                if (draggedPiece > 0) {
+                    dragActive = true;
+                    draggedPieceBmp = board.getPieceBox()[draggedPiece];
+                    int squareSize = board.getSquareSize();
+                    dragRect = new Rect(0,0,squareSize,squareSize);
+                }
                 break;
             case MotionEvent.ACTION_UP:
-                view.performClick();
+                if (dragActive) {
+                    dragActive = false;
+                    Canvas c = mSurfaceHolder.lockCanvas();
+                    board.dropDraggedPiece(x, y, draggedPiece);
+                    board.onDraw(c);
+                    mSurfaceHolder.unlockCanvasAndPost(c);
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (dragActive) {
+                    Canvas c = mSurfaceHolder.lockCanvas();
+                    int squareSize = board.getSquareSize();
+                    dragRect.offsetTo(x-squareSize/2,y-squareSize/2);
+                    board.onDraw(c);
+                    c.drawBitmap(draggedPieceBmp,null,dragRect,p);
+                    mSurfaceHolder.unlockCanvasAndPost(c);
+                }
                 break;
             default:
                 break;
         }
         return false;
+    }
+
+    public void onFlipClick() {
+        if (mSurfaceHolder != null) {
+            board.flip();
+            Canvas c = mSurfaceHolder.lockCanvas();
+            board.onDraw(c);
+            mSurfaceHolder.unlockCanvasAndPost(c);
+        }
     }
 }

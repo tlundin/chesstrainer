@@ -14,6 +14,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowInsets;
+import android.widget.Button;
 
 import com.teraime.chesstrainer.databinding.ActivityFullscreenBinding;
 
@@ -89,12 +90,19 @@ public class FullscreenActivity extends AppCompatActivity {
         mVisible = true;
 
         mContentView = binding.chessBg;
+        Button flipButton = binding.flip;
 
         SurfaceView sf = (SurfaceView)mContentView;
         GameView game = new GameView(this);
         sf.getHolder().addCallback(game);
         sf.setOnClickListener(game);
         sf.setOnTouchListener(game);
+        flipButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _view) {
+                game.onFlipClick();
+            }
+        });
         // Set up the user interaction to manually show or hide the system UI.
         //mContentView.setOnClickListener(new View.OnClickListener() {
           //  @Override
