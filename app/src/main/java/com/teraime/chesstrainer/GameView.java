@@ -12,8 +12,11 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.View;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+
+import org.w3c.dom.Text;
 
 import java.io.File;
 import java.util.List;
@@ -26,10 +29,16 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
     private SurfaceHolder mSurfaceHolder = null;
     private boolean moveIsActive = false;
     private MySQLiteHelper db;
-    public GameView(Context context, MySQLiteHelper db) {
+    private ChessPosition boardAfterMove;
+    private int boardOffset;
+    TextView scoreT;
+    private int score = 0;
+
+    public GameView(Context context, MySQLiteHelper db, TextView scoreT) {
 
         this.context = context;
         this.db = db;
+        this.scoreT = scoreT;
 
     }
     String TAG = "beboop";
@@ -38,7 +47,11 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
     public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
         Log.d(TAG,"Surf is good");
         mSurfaceHolder=surfaceHolder;
-        board = new Board(context,Board.ScaleOptions.MAX, Board.StyleOptions.oak, Board.StyleOptions.fancy,surfaceHolder.getSurfaceFrame().width(),this);
+        int screenW = surfaceHolder.getSurfaceFrame().width();
+        int screenH = surfaceHolder.getSurfaceFrame().height();
+        boardOffset = (screenH-screenW)/2;
+
+        board = new Board(context,Board.ScaleOptions.MAX, Board.StyleOptions.oak, Board.StyleOptions.fancy,screenW, boardOffset, this);
         ChessPosition pos = new ChessPosition(INITIAL_BOARD);//new ChessPosition(GameState.convertFenToBoard(ChessConstants.FEN_STARTING_POSITION));
         pos.print();
         board.setupPosition(pos);
@@ -65,13 +78,22 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
         mSurfaceHolder.unlockCanvasAndPost(c);
     }
 
+    public void scoreChanged() {
+        scoreT.setText(""+score++);
+    }
+
     @Override
     public void moveIsActive() {
         moveIsActive = true;
     }
     @Override
     public void moveIsDone() {
+        board.setupPosition(boardAfterMove);
+        boardAfterMove.print();
+        surfaceChanged();
         moveIsActive = false;
+        if (moveListener != null)
+            moveListener.onMoveDone();
     }
 
     @Override
@@ -92,26 +114,28 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
                     Log.d(TAG, "x: " + x + "y:" + y);
                     draggedPiece = board.dragIfPiece(x, y);
                     if (draggedPiece > 0) {
-                        dragActive = true;
                         Bitmap draggedPieceBmp = board.getPieceBox()[draggedPiece];
                         int squareSize = board.getSquareSize();
                         Rect dragRect = new Rect(0, 0, squareSize, squareSize);
                         board.initialiseMoveRect(dragRect, draggedPieceBmp);
+                        dragActive = true;
                     }
                 }
                 break;
             case MotionEvent.ACTION_UP:
                 if (dragActive) {
                     dragActive = false;
-                    board.dropMovingPiece(new Point(x, y), draggedPiece);
-                    moveIsDone();
+                    BasicMove bMove= board.dropMovingPiece(new Point(x, y-boardOffset), draggedPiece);
                     surfaceChanged();
+                    if (dragListener != null) {
+                        dragListener.onDragDone(bMove);
+                    }
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (dragActive) {
                     int squareSize = board.getSquareSize();
-                    board.movePieceTo(new Point(x-squareSize/2,y-squareSize/2));
+                    board.movePieceTo(new Point(x-squareSize/2,y-squareSize/2-boardOffset));
                     surfaceChanged();
                 }
                 break;
@@ -134,47 +158,38 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
         //board.move(new BasicMove(new Cord(4,1),new Cord(4,2)));
         //File dbP = context.getDatabasePath("chess.db");
         //Log.d("db","FILE "+dbP.getAbsolutePath());
-        db.openDataBase();
-        int noOfProblems = 5;
-        int minProbLvl = 1500;
-        int maxProbLvl = 2000;
-        Types.TacticProblem problem = db.getTacticProblem(minProbLvl,maxProbLvl);
-        int[][] pos = Tools.translateBoard(problem.board);
-        MoveList ml = new MoveList();
-        ml.add(new GameState(pos,problem.whiteToMove));
-        Tools.addMoves(problem.moves,ml);
-        ml.resetMovePointer();
-        GameState gs = ml.getCurrentPosition();
-        board.setupPosition(gs.getPosition());
-        if (!gs.whiteToMove)
-            board.flip();
+        if (!moveIsActive) {
+            db.openDataBase();
+            int noOfProblems = 5;
+            int minProbLvl = 1500;
+            int maxProbLvl = 2000;
+            Types.TacticProblem problem = db.getTacticProblem(minProbLvl, maxProbLvl);
+            int[][] pos = Tools.translateBoard(problem.board);
+            MoveList ml = new MoveList();
+            ml.add(new GameState(pos, problem.whiteToMove));
+            Tools.addMoves(problem.moves, ml);
+            ml.resetMovePointer();
+            GameState gs = ml.getCurrentPosition();
+            board.setupPosition(gs.getPosition());
+            if (gs.whiteToMove)
+                board.setWhiteOnTop();
+            else
+                board.setBlackOnTop();
 
-        if(ml.goForward()) {
-            Move moveThatLeadHere = ml.getCurrentPosition().getMove();
-            GameState newState = ml.getCurrentPosition();
-            board.move(moveThatLeadHere, new MoveCallBack_I() {
-                @Override
-                public void onMoveDone() {
-                    Log.d("schack", "move done. Now waiting for player input");
-                    int result = newState.checkForEndConditions();
-                    if (result != GameResult.NORMAL) {
-                        if (result == GameResult.MATE) {
-                            Log.d("schack", "Computer won!");
-                        } else {
-                            Log.d("schack", "Stale mate!");
-                        }
-
-                    } else if (newState.checkIfDraw(!newState.whiteToMove)) {
-                        Log.d("schack", "NO WAY TO WIN");
-                    } else
-                        MoveCallBack_I playerMovedCb = new MoveCallBack_I() {
-                            public void onMoveDone() {
-
-                            }
-                        }
-                }
-            });
+            if (ml.goForward()) {
+                Move moveThatLeadHere = ml.getCurrentPosition().getMove();
+                Log.d("v", "Move to do: " + moveThatLeadHere.getShortNoFancy() + " raw: " + moveThatLeadHere.getRawNotation() + " ts: " + moveThatLeadHere.toString());
+                this.registerDragAndMoveListener(new TacticsHandler(ml, board,this));
+                board.move(moveThatLeadHere);
+                boardAfterMove = ml.getCurrentPosition().getPosition();
+            }
         }
+    }
+
+    MoveCallBack_I dragListener,moveListener;
+    private void registerDragAndMoveListener(MoveCallBack_I listener) {
+        this.dragListener=listener;
+        this.moveListener=listener;
     }
 
     public void onResetClick() {

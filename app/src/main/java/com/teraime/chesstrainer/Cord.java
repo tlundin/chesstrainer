@@ -32,6 +32,15 @@ public class Cord {
 		return this.column ==column && this.row == row;
 	}
 
+	@Override
+	public boolean equals(Object other) {
+		Cord mother = (Cord)other;
+		return column == mother.column && row == mother.row;
+	}
 
+    @Override
+	public String toString() {
+		return "["+column+","+row+"]";
+	}
 
 	}

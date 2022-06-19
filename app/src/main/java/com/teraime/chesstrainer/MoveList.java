@@ -64,8 +64,8 @@ public class MoveList extends LinkedList<GameState> {
 	
 	public GameState getCurrentPosition() {
 		Move m = get(currentPosition).getMove();
-		Log.d("schack","Getcurrentposition, move that lead here: "+(m==null?"NULL":m.getShortNoFancy()));
-		Log.d("schack","Getcurrentposition, white to move: "+get(currentPosition).whiteToMove);
+//		Log.d("schack","Getcurrentposition, move that lead here: "+(m==null?"NULL":m.getShortNoFancy()));
+//		Log.d("schack","Getcurrentposition, white to move: "+get(currentPosition).whiteToMove);
 		return this.isEmpty()?null:get(currentPosition);
 	}
 	
@@ -83,7 +83,7 @@ public class MoveList extends LinkedList<GameState> {
 	public boolean add(GameState gs) {
 		super.add(gs);
 		currentPosition = this.size()-1;
-		Log.d("schack","Current position after ADD: "+currentPosition+". ");
+		//Log.d("schack","Current position after ADD: "+currentPosition+". ");
 		return true;
 	}
 	

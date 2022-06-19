@@ -30,23 +30,30 @@ public class Board
 
     final Bitmap[] pieceBox;
     final Boolean hasEdge;
-    final Rect[] squares;
+    final Rect[] squares,pieceSquares;
     final int border_thickness,gridSize;
     private ChessPosition mPosition=null;
-    private boolean isFlipped=false;
+    private boolean whiteOnTop = false;
     private Cord movingPieceInitialPosition,Outside;
-    private Bitmap movingPieceBmp;
-    private Rect movingRect;
+    private Bitmap movingPieceBmp,okAnimateBmp;
+    private Rect movingRect,okRect;
     private SurfaceHolderCallback surfer;
+    private int boardOffset;
+    final float centerX,centerY;
+    private Cord okLocation;
 
-    public Board(Context context, ScaleOptions scaleOption, StyleOptions boardStyle, StyleOptions pieceStyle, int size_with_borders, SurfaceHolderCallback surfh) {
+    public Board(Context context, ScaleOptions scaleOption, StyleOptions boardStyle, StyleOptions pieceStyle, int size_with_borders, int bo, SurfaceHolderCallback surfh) {
         int _size = scale(size_with_borders,scaleOption);
+        this.boardOffset = bo;
         this.pieceStyle = pieceStyle;
         this.boardStyle = boardStyle;
         surfer = surfh;
         boardRect = new Rect(0,0,_size,_size);
         Outside = new Cord(-1,-1);
         movingPieceInitialPosition =Outside;
+
+        centerX = boardRect.width()/2;
+        centerY = boardRect.height()/2;
         switch (boardStyle) {
             case oak:
                 border_thickness = (int) (_size*border_thickness_as_percentage)/2;
@@ -69,7 +76,7 @@ public class Board
             break;
         }
         gridRect = new Rect(border_thickness,border_thickness,_size-border_thickness,_size-border_thickness);
-        squares = new Rect[64];
+        squares = new Rect[64]; pieceSquares = new Rect[64];
         w_square = BitmapFactory.decodeResource(context.getResources(),R.drawable.white_square_wood);
         b_square = BitmapFactory.decodeResource(context.getResources(),R.drawable.dark_square_wood);
         int top = 0;int left=0;int bottom=0;int right=0;
@@ -81,9 +88,12 @@ public class Board
                 top    = border_thickness+row*square_size;
                 right  = left+square_size;
                 bottom = top+square_size;
-                squares[i++] = new Rect(left,top,right,bottom);
+                squares[i] = new Rect(left,top,right,bottom);
+                pieceSquares[i++] = new Rect(left,top,right,bottom);
             }
         }
+        okRect = new Rect(0,0,square_size/2,square_size/2);
+        okAnimateBmp = BitmapFactory.decodeResource(context.getResources(),R.drawable.ok_icon);
         switch (pieceStyle) {
             case oak:
             default:
@@ -116,11 +126,11 @@ public class Board
     }
 
     public void setupPosition(ChessPosition position) {
-        isFlipped=false;
         mPosition = position;
     }
 
     public int dragIfPiece(int x, int y) {
+        y-= boardOffset;
         if (isInside(x,y)) {
             Cord p = calculateColRow(x,y);
             Log.d("x","col:"+p.getColumn()+" row:"+p.getRow());
@@ -136,27 +146,34 @@ public class Board
     private Cord calculateColRow(int x, int y) {
         int column = (x-border_thickness)/getSquareSize();
         int row = (y-border_thickness)/getSquareSize();
-        int fliprow = isFlipped?7-row:row;
-        return new Cord(column,fliprow);
+        int flip_row = whiteOnTop ?7-row:row;
+        int flip_column = whiteOnTop ?7-column:column;
+        return new Cord(flip_column,flip_row);
     }
-    private Point calculateXYFromGrid(int col, int row) {
-        int fliprow = isFlipped?7-row:row;
-        int x = col*getSquareSize()+border_thickness;
-        int y = fliprow*getSquareSize()+border_thickness;
+    private Point calculateXYFromGrid(int column, int row) {
+        int flip_row = whiteOnTop ?7-row:row;
+        int flip_column = whiteOnTop ?7-column:column;
+        int x = flip_column*getSquareSize()+border_thickness;
+        int y = flip_row*getSquareSize()+border_thickness;
         return new Point(x,y);
     }
 
-    public void dropMovingPiece(Point dropPoint, int piece) {
+    public BasicMove dropMovingPiece(Point dropPoint, int piece) {
         int x = dropPoint.x;
         int y = dropPoint.y;
+        Cord movingPieceEndPosition;
+        BasicMove bMove = null;
         if (isInside(x,y)) {
-            Cord p = calculateColRow(x, y);
+            movingPieceEndPosition = calculateColRow(x, y);
             mPosition.put(movingPieceInitialPosition.getColumn(), movingPieceInitialPosition.getRow(), ChessConstants.B_EMPTY);
-            mPosition.put(p.getColumn(), p.getRow(), piece);
+            mPosition.put(movingPieceEndPosition.getColumn(), movingPieceEndPosition.getRow(), piece);
+            bMove = new BasicMove(movingPieceInitialPosition,movingPieceEndPosition);
         }
+
         movingPieceInitialPosition = Outside;
         movingRect = null;
         movingPieceBmp = null;
+        return bMove;
     }
 
     public boolean isInside(int x, int y) {
@@ -170,6 +187,13 @@ public class Board
     public void initialiseMoveRect(Rect dragRect, Bitmap draggedPieceBmp) {
         movingRect=dragRect;
         movingPieceBmp=draggedPieceBmp;
+    }
+
+    public void setWhiteOnTop() {
+        whiteOnTop=true;
+    }
+    public void setBlackOnTop() {
+        whiteOnTop=false;
     }
 
 
@@ -187,12 +211,13 @@ public class Board
     }
 
     public void flip() {
-        isFlipped = !isFlipped;
+        whiteOnTop = !whiteOnTop;
     }
 
-    public void move(Move move, MoveCallBack_I cb) {
+    final Handler animationHandler = new Handler(Looper.myLooper());
+
+    public void move(Move move) {
         surfer.moveIsActive();
-       final Handler moveHandler = new Handler(Looper.myLooper());
        movingPieceInitialPosition=move.getFromCord();
        final Point movingPiecePosition=calculateXYFromGrid(move.getFromColumn(),move.getFromRow());
        final Point movingPieceDestination=calculateXYFromGrid(move.getToColumn(),move.getToRow());
@@ -201,7 +226,7 @@ public class Board
        int squareSize = getSquareSize();
        movingRect = new Rect(0,0,squareSize,squareSize);
        Point[] pointsOnTheWay = PathFactory.generate(Linear,movingPiecePosition,movingPieceDestination);
-       moveHandler.post(new Runnable() {
+       animationHandler.post(new Runnable() {
            int count = 0;
            @Override
            public void run() {
@@ -212,12 +237,48 @@ public class Board
                }
                dropMovingPiece(movingPieceDestination, movingPieceId);
                surfer.moveIsDone();
-               cb.onMoveDone();
-               invalidateView();
            }
        });
     }
 
+    boolean swellAnimate = false, okAnimate=false;
+    float swellFactor=1f;
+
+    public void okAnimate(Cord location) {
+        final float[] swellFactors = new float[]{0,45,90,180,245,360};
+
+        animationHandler.post(new Runnable() {
+            int count = 0;
+            @Override
+            public void run() {
+                okAnimate=true;
+                okLocation=location;
+                while(count<swellFactors.length) {
+                    swellFactor=swellFactors[count];
+                    invalidateView();
+                    count++;
+                }
+                okAnimate=false;
+            }
+        });
+    }
+    public void swellAnimate() {
+        final float[] swellFactors = new float[]{1.05f,1.06f,1.1f,1.1f,1.06f,1.05f,1};
+
+        animationHandler.post(new Runnable() {
+            int count = 0;
+            @Override
+            public void run() {
+                swellAnimate=true;
+                while(count<swellFactors.length) {
+                    swellFactor=swellFactors[count];
+                    invalidateView();
+                    count++;
+                }
+                swellAnimate=false;
+            }
+        });
+    }
 
 
     public void movePieceTo(Point point) {
@@ -229,8 +290,14 @@ public class Board
     }
 
     public void onDraw(Canvas c) {
+
+        c.translate(0,boardOffset);
         if (c != null) {
             c.drawColor(Color.BLACK);
+            if (swellAnimate) {
+                c.save();
+                c.scale(swellFactor, swellFactor,centerX,centerY);
+            }
             if (hasEdge) {
                 c.drawBitmap(edgeHorisontal, null, T_Edge, p);
                 c.drawBitmap(edgeHorisontal, null, B_Edge, p);
@@ -244,17 +311,30 @@ public class Board
                 for (int column = 0; column < 8; column++) {
                     square = (square == w_square) ? b_square : w_square;
                     c.drawBitmap(square, null, squares[i], p);
-                    int flip_row = isFlipped ? 7 - row : row;
+                    int flip_row = whiteOnTop ? 7 - row : row;
+                    int flip_column = whiteOnTop ? 7 - column : column;
                     //Don't draw The moving piece
-                    if (!mPosition.isEmpty(column, flip_row))
-                        if (!movingPieceInitialPosition.equals(column, flip_row))
-                            c.drawBitmap(pieceBox[mPosition.get(column, flip_row)], null, squares[i], p);
+
+                    if (!mPosition.isEmpty(flip_column, flip_row))
+                        if (!movingPieceInitialPosition.equals(flip_column, flip_row))
+                            c.drawBitmap(pieceBox[mPosition.get(flip_column, flip_row)], null, pieceSquares[i], p);
+
                     i++;
                 }
             }
             if(movingRect!=null) {
                 c.drawBitmap(movingPieceBmp,null,movingRect,p);
             }
+            if (okAnimate) {
+                c.save();
+                final Point okLocationXY=calculateXYFromGrid(okLocation.column,okLocation.row);
+                c.rotate(swellFactor,okLocationXY.x+getSquareSize()/4,okLocationXY.y+getSquareSize()/4);
+                okRect.offsetTo(okLocationXY.x,okLocationXY.y);
+                c.drawBitmap(okAnimateBmp,null,okRect,p);
+            }
+            if (swellAnimate || okAnimate )
+                c.restore();
+
 
         }
 

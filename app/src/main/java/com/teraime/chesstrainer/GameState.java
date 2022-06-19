@@ -9,7 +9,7 @@ import java.util.List;
 
 public class GameState {
 
-	private ChessPosition pos; 
+	private ChessPosition pos;
 	public int fiftyDrawCounter;
 	public String whiteOkToCastle, blackOkToCastle;
 	public boolean whiteToMove;
@@ -56,7 +56,7 @@ public class GameState {
 	 * null || FEN == null) { System.out.println("couldn't calc fen in
 	 * SetMove!"); return null; } //Prepare by replacing all numbers with " "
 	 * myFen = replaceNums(myFen);
-	 * 
+	 *
 	 * int i=0; char m,n; while (i<myFen.length()) { m = myFen.charAt(i); n =
 	 * FEN.charAt(i); if (m!=n) { System.out.println("Found diff at: "+i); if
 	 * ("rnbqkp".indexOf(n)>=0) System.out.println("black piece moved!"); } } }
@@ -152,7 +152,7 @@ public class GameState {
 	private boolean hasEscapeRoute(boolean color) {
 		Cord k = new Cord();
 		k.set(getKingPosition(color).column, getKingPosition(color).row);
-		//		 System.out.println("king pos is: "+k.x+" "+k.y);
+		//		 System.out.println("king pos is: "+k.column+" "+k.row);
 		for (int i = 0; i < 8; i++) {
 			k.set(getKingPosition(color).column + xx[i], getKingPosition(color).row
 					+ yy[i]);
@@ -161,27 +161,27 @@ public class GameState {
 			if (kingDistanceOk(getKingPosition(!color), k)) {
 				if (!inCheck(color, k)) {
 					if (pos.get(k.column, k.row) == ChessConstants.B_EMPTY) {
-						//						System.out.println("escape:" + k.x + " " + k.y
+						//						System.out.println("escape:" + k.column + " " + k.row
 						//								+ "empty+nocheck...");
 						return true;
 					} else {
-						//						System.out.println("noescape:" + k.x + " " + k.y
+						//						System.out.println("noescape:" + k.column + " " + k.row
 						//								+ " not empty...");
 						if (ChessConstants.isWhite(pos.get(k.column, k.row)) != color) {
-							//							System.out.println("zzzescape: "+k.x+" "+k.y);
+							//							System.out.println("zzzescape: "+k.column+" "+k.row);
 							return true;
 						}
 						//						else
-						//							System.out.println("noescape: " + k.x + " " + k.y
+						//							System.out.println("noescape: " + k.column + " " + k.row
 						//									+ " has same color");
 					}
-				}					
+				}
 				//					else
-				//					System.out.println("noescape:" + k.x + " " + k.y
+				//					System.out.println("noescape:" + k.column + " " + k.row
 				//							+ " in check");
-			} 
+			}
 			//			else
-			//				System.out.println("noescape:" + k.x + " " + k.y
+			//				System.out.println("noescape:" + k.column + " " + k.row
 			//						+ " too close to king");
 
 		}
@@ -227,7 +227,7 @@ public class GameState {
 					// if its a knight we are done.
 					if (ChessConstants.isKnight(cp)) {  //|| ChessConstants.isPawn(cp)
 						System.out
-						.println("Done...its a knight.");
+								.println("Done...its a knight.");
 						return true;
 					}
 					// check for pieces in between.
@@ -239,7 +239,7 @@ public class GameState {
 						if ((hits & mask) != 0)
 							store[jj++] = ii;
 						hits = hits >> 1;
-		ii--;
+						ii--;
 					}
 					int x, y;
 					for (ii = 0; ii < jj; ii++) {
@@ -259,7 +259,7 @@ public class GameState {
 								}
 							} else {
 								System.out
-								.println("...and has freeway to go between");
+										.println("...and has freeway to go between");
 								return true;
 							}
 						}
@@ -427,19 +427,19 @@ public class GameState {
 
 	public Move classifyMove(Move m) {
 		int movingPieceId = pos.get(m.getFromColumn(),m.getFromRow());
-		int targetId = pos.get(m.getToRow(),m.getToRow());
+		int targetId = pos.get(m.getToColumn(),m.getToRow());
 		int type = Move.normalF;
 
 		if (ChessConstants.isPawn(movingPieceId)) {
-			//Log.d("schack","found pawn on "+m.getFromX()+","+m.getFromY());
-			if ((m.getToRow() != m.getFromColumn()) && (ChessConstants.isEmpty(targetId)))
+			//Log.d("schack","found pawn on "+m.getFromColumn()+","+m.getFromRow());
+			if ((m.getToColumn() != m.getFromColumn()) && (ChessConstants.isEmpty(targetId)))
 				type = Move.enPassantF;
 			else if ((m.getToRow() == 7) || (m.getToRow() == 0)) {
 				type = Move.pawnPromoteF;
 			} else if (Math.abs(m.getFromRow()-m.getToRow()) == 2)
 				type = Move.twoStepPawnF;
 		} else if (ChessConstants.isKing(movingPieceId)
-				&& (Math.abs(m.getToRow()-m.getFromColumn()) == 2))
+				&& (Math.abs(m.getToColumn()-m.getFromColumn()) == 2))
 			type = Move.exchangeF;
 		m.set(movingPieceId, type, targetId != ChessConstants.B_EMPTY);
 
@@ -455,10 +455,10 @@ public class GameState {
 		int movingPieceId = m.pieceId;
 		//		System.out.println("Piece is a "
 		//				+ ChessConstants.pieceNames[movingPieceId]);
-		int targetId = pos.get(m.getToRow(),m.getToRow());
+		int targetId = pos.get(m.getToColumn(),m.getToRow());
 
-		// System.out.println("trying move FROM: ("+m.getFromX()+"x"+m.getFromY()+") TO:
-		// ("+m.getToX()+"x"+m.getToY()+")");
+		// System.out.println("trying move FROM: ("+m.getFromColumn()+"x"+m.getFromRow()+") TO:
+		// ("+m.getToColumn()+"x"+m.getToRow()+")");
 		// check that player does not move opponents piece. Irrelevant. Only own
 		// pieces draggable.
 		if (!checkTurn(movingPieceId)) {
@@ -469,13 +469,13 @@ public class GameState {
 
 
 		// check if target is reachable by piece
-		if ((bb.setBitAt(0l, m.getToRow(), m.getToRow()) & bb.getMoves(m.getFromColumn(), m.getFromRow(),
+		if ((bb.setBitAt(0l, m.getToColumn(), m.getToRow()) & bb.getMoves(m.getFromColumn(), m.getFromRow(),
 				movingPieceId)) == 0) {
 			System.out.println("illegal: "
 					+ ChessConstants.pieceNames[movingPieceId]
-							+ " cannot move like that");
-			//			System.out.println("fromx fromy tox toy:"+m.getFromX()+" "+m.getFromY()+" "+m.getToX()+" "+m.getToY());
-			//			bb.printBoard(m.getFromX(), m.getFromY(), movingPieceId);
+					+ " cannot move like that");
+			//			System.out.println("fromx fromy tox toy:"+m.getFromColumn()+" "+m.getFromRow()+" "+m.getToColumn()+" "+m.getToRow());
+			//			bb.printBoard(m.getFromColumn(), m.getFromRow(), movingPieceId);
 			return null;
 		}
 
@@ -489,85 +489,85 @@ public class GameState {
 
 		switch (m.moveType) {
 
-		case Move.normalF:
-		case Move.twoStepPawnF:
+			case Move.normalF:
+			case Move.twoStepPawnF:
 
-			// check if something in between
-			if (!ChessConstants.isKnight(movingPieceId))
-				if (!freeWay(m.getFromColumn(), m.getFromRow(), m.getToRow(),
-						m.getToRow())) {
-					//					System.out.println("illegal: not a clear path");
-					//					this.getPosition().print();
-					return null;
-				}
-			// If pawn: check if enPassant should be set.
-			if (ChessConstants.isPawn(movingPieceId)) {
-				// check if pawn is moved forward.
-				if (m.getFromColumn() == m.getToRow()) {
-					// exit if target is occupied. pawns cannot take forward.
-					if (!ChessConstants.isEmpty(targetId)) {
-						//System.out.println("illegal: pawn cannot take forward");
+				// check if something in between
+				if (!ChessConstants.isKnight(movingPieceId))
+					if (!freeWay(m.getFromColumn(), m.getFromRow(), m.getToColumn(),
+							m.getToRow())) {
+						//					System.out.println("illegal: not a clear path");
+						//					this.getPosition().print();
 						return null;
 					}
+				// If pawn: check if enPassant should be set.
+				if (ChessConstants.isPawn(movingPieceId)) {
+					// check if pawn is moved forward.
+					if (m.getFromColumn() == m.getToColumn()) {
+						// exit if target is occupied. pawns cannot take forward.
+						if (!ChessConstants.isEmpty(targetId)) {
+							//System.out.println("illegal: pawn cannot take forward");
+							return null;
+						}
+					}
 				}
-			}
 
-			break;
+				break;
 
-		case Move.enPassantF:
-			Move previousMove = getMove();
-			if (previousMove == null
-					|| previousMove.moveType != Move.twoStepPawnF
-					|| previousMove.getToRow() != m.getToRow()
-					|| Math.abs(previousMove.getToRow()-m.getToRow()) != 1) {
-				//System.out.println("illegal enpassant");
-				return null;
-			}
-			break;
+			case Move.enPassantF:
+				Move previousMove = getMove();
+				if (previousMove == null
+						|| previousMove.moveType != Move.twoStepPawnF
+						|| previousMove.getToColumn() != m.getToColumn()
+						|| Math.abs(previousMove.getToRow()-m.getToRow()) != 1) {
+					//System.out.println("illegal enpassant");
+					return null;
+				}
+				break;
 
-		case Move.exchangeF:
-			if ((m.getFromRow() != m.getToRow())
-					|| (whiteToMove ? (m.getFromRow() != 7 || whiteOkToCastle
-					.equals("-"))
-					: (m.getFromRow() != 0 || blackOkToCastle
-					.equals("-")))
-					|| (inCheck(whiteToMove,
-							new Cord(m.getFromColumn(), m.getFromRow())))
-							|| (m.getToRow() > m.getFromColumn() ? !freeWay(4,
-									m.getFromRow(), 7, m.getToRow())
-									|| inCheck(
-											whiteToMove, new Cord(
-													m.getFromColumn() + 1, m.getFromRow()))
-													|| !ChessConstants
-													.isRook(pos.get(7, m.getFromRow()))
-													|| (whiteToMove ? whiteOkToCastle
-															.indexOf("K") < 0
-															: blackOkToCastle
-															.indexOf("k") < 0)
-															: !freeWay(4, m.getFromRow(), 0,
-																	m.getToRow())
-																	|| inCheck(
-																			whiteToMove,
-																			new Cord(m.getFromColumn() - 1, m.getFromRow()))
-																			|| !ChessConstants
-																			.isRook(pos.get(0, m.getFromRow()))
-																			|| (whiteToMove ? whiteOkToCastle
-																					.indexOf("Q") < 0
-																					: blackOkToCastle
-																					.indexOf("q") < 0))) {
-				//System.out.println("illegal castling");
-				return null;
-			}
-			break;
+			case Move.exchangeF:
+				if ((m.getFromRow() != m.getToRow())
+						|| (whiteToMove ? (m.getFromRow() != 7 || whiteOkToCastle
+						.equals("-"))
+						: (m.getFromRow() != 0 || blackOkToCastle
+						.equals("-")))
+						|| (inCheck(whiteToMove,
+						new Cord(m.getFromColumn(), m.getFromRow())))
+						|| (m.getToColumn() > m.getFromColumn() ? !freeWay(4,
+						m.getFromRow(), 7, m.getToRow())
+						|| inCheck(
+						whiteToMove, new Cord(
+								m.getFromColumn() + 1, m.getFromRow()))
+						|| !ChessConstants
+						.isRook(pos.get(7, m.getFromRow()))
+						|| (whiteToMove ? whiteOkToCastle
+						.indexOf("K") < 0
+						: blackOkToCastle
+						.indexOf("k") < 0)
+						: !freeWay(4, m.getFromRow(), 0,
+						m.getToRow())
+						|| inCheck(
+						whiteToMove,
+						new Cord(m.getFromColumn() - 1, m.getFromRow()))
+						|| !ChessConstants
+						.isRook(pos.get(0, m.getFromRow()))
+						|| (whiteToMove ? whiteOkToCastle
+						.indexOf("Q") < 0
+						: blackOkToCastle
+						.indexOf("q") < 0))) {
+					//System.out.println("illegal castling");
+					return null;
+				}
+				break;
 
-		case Move.pawnPromoteF:
-			if (m.getFromColumn() == m.getToRow() && (targetId != ChessConstants.B_EMPTY))
+			case Move.pawnPromoteF:
+				if (m.getFromColumn() == m.getToColumn() && (targetId != ChessConstants.B_EMPTY))
 				// exit if target is occupied. pawns cannot take forward.
-			{
-				System.out.println("illegal promote. Piece in the way");
-				return null;
-			}
-			break;
+				{
+					System.out.println("illegal promote. Piece in the way");
+					return null;
+				}
+				break;
 		}
 		//		Log.d("schack","OK: "+m.getShortNoFancy());
 		GameState newState = new GameState(this,m);
@@ -583,8 +583,8 @@ public class GameState {
 
 		// get king position for the player currently moving.
 		if (inCheck(!whiteToMove)) {
-			//	System.out.println("Illegal: "+(!whiteToMove?"White ":"Black ") +"king at ("+getKingPosition(!whiteToMove).x+","+getKingPosition(!whiteToMove).y+") is in check from "+checkPiecePos.x+","+checkPiecePos.y);
-			//	System.out.println("Checking piece is a "+ChessConstants.pieceNames[pos.get(checkPiecePos.x, checkPiecePos.y)]);
+			//	System.out.println("Illegal: "+(!whiteToMove?"White ":"Black ") +"king at ("+getKingPosition(!whiteToMove).column+","+getKingPosition(!whiteToMove).row+") is in check from "+checkPiecePos.column+","+checkPiecePos.row);
+			//	System.out.println("Checking piece is a "+ChessConstants.pieceNames[pos.get(checkPiecePos.column, checkPiecePos.row)]);
 			return false;
 		}
 		// check that kings are not too close
@@ -604,10 +604,10 @@ public class GameState {
 				if (ChessConstants.isEmpty(piece) || (ChessConstants.isWhite(piece)==playerIsWhite)||ChessConstants.isKing(piece))
 					continue;
 				else
-					if(ChessConstants.isBishop(piece) || ChessConstants.isKnight(piece))
-						val += 1;
-					else
-						val += 2;
+				if(ChessConstants.isBishop(piece) || ChessConstants.isKnight(piece))
+					val += 1;
+				else
+					val += 2;
 				if (val >1)
 					return false;
 			}
@@ -627,10 +627,10 @@ public class GameState {
 			}
 		}
 		else
-			if (inStaleMate()) {
-				System.out.println("STALEMATE");
-				return GameResult.STALEMATE;
-			}
+		if (inStaleMate()) {
+			System.out.println("STALEMATE");
+			return GameResult.STALEMATE;
+		}
 		return GameResult.NORMAL;
 	}
 
@@ -639,52 +639,52 @@ public class GameState {
 		// make move
 		if (m==null)
 			return;
-		if (!ChessConstants.isEmpty(pos.get(m.getToRow(),m.getToRow())))
+		if (!ChessConstants.isEmpty(pos.get(m.getToColumn(),m.getToRow())))
 			m.setSlag();
-		pos.put(m.getToRow(),m.getToRow(),pos.get(m.getFromColumn(),m.getFromRow()));
+		pos.put(m.getToColumn(),m.getToRow(),pos.get(m.getFromColumn(),m.getFromRow()));
 		pos.put(m.getFromColumn(),m.getFromRow(),ChessConstants.B_EMPTY);
 		//		System.out.println("Making move: "+m.getLongNotation());
 		// make sideeffects
 		if (ChessConstants.isKing(m.pieceId))
-			setKingPosition(!whiteToMove, new Cord(m.getToRow(), m.getToRow()));
+			setKingPosition(!whiteToMove, new Cord(m.getToColumn(), m.getToRow()));
 		switch (m.moveType) {
-		case Move.normalF:
-			if(!ChessConstants.isKing(m.pieceId)&&!ChessConstants.isPawn(m.pieceId))
-				disambiguate(m);
-			break;
-		case Move.twoStepPawnF:
-			enPassantSquare = new Cord(m.getFromColumn(), ChessConstants
-					.isWhite(m.pieceId) ? 3 : 6);
-			break;
-		case Move.enPassantF:
-			pos.put(m.getToRow(),m.getFromRow(),ChessConstants.B_EMPTY);
-			m.setSlag();m.disx=true;
-			break;
-		case Move.pawnPromoteF:
-			if (m.promotePiece != ChessConstants.B_EMPTY)
-				pos.put(m.getToRow(),m.getToRow(),m.promotePiece);
-			//Log.d("schack","Promote piece move applied");
-			if (m.isInSlag())
-				m.disx=true;
-			break;
-		case Move.exchangeF:
-			int rook = (whiteToMove) ? ChessConstants.B_ROOK
-					: ChessConstants.W_ROOK;
-			if (m.getToRow() > m.getFromColumn()) {
-				pos.put(5,m.getToRow(),rook);
-				pos.put(7,m.getToRow(),ChessConstants.B_EMPTY);
-			} else {
-				pos.put(3,m.getToRow(),rook);
-				pos.put(0,m.getToRow(),ChessConstants.B_EMPTY);
-			}
-			break;
+			case Move.normalF:
+				if(!ChessConstants.isKing(m.pieceId)&&!ChessConstants.isPawn(m.pieceId))
+					disambiguate(m);
+				break;
+			case Move.twoStepPawnF:
+				enPassantSquare = new Cord(m.getFromColumn(), ChessConstants
+						.isWhite(m.pieceId) ? 3 : 6);
+				break;
+			case Move.enPassantF:
+				pos.put(m.getToColumn(),m.getFromRow(),ChessConstants.B_EMPTY);
+				m.setSlag();m.disx=true;
+				break;
+			case Move.pawnPromoteF:
+				if (m.promotePiece != ChessConstants.B_EMPTY)
+					pos.put(m.getToColumn(),m.getToRow(),m.promotePiece);
+				//Log.d("schack","Promote piece move applied");
+				if (m.isInSlag())
+					m.disx=true;
+				break;
+			case Move.exchangeF:
+				int rook = (whiteToMove) ? ChessConstants.B_ROOK
+						: ChessConstants.W_ROOK;
+				if (m.getToColumn() > m.getFromColumn()) {
+					pos.put(5,m.getToRow(),rook);
+					pos.put(7,m.getToRow(),ChessConstants.B_EMPTY);
+				} else {
+					pos.put(3,m.getToRow(),rook);
+					pos.put(0,m.getToRow(),ChessConstants.B_EMPTY);
+				}
+				break;
 		}
 
 		theMoveThatLeadToThisPosition = m;
 		if ((!whiteToMove && !whiteOkToCastle.equals("-") || whiteToMove
 				&& !blackOkToCastle.equals("-"))
 				&& (ChessConstants.isKing(m.pieceId) || ChessConstants
-						.isRook(m.pieceId))) {
+				.isRook(m.pieceId))) {
 			//System.out.println("king or rook moved.");
 			forbidCastling(m);
 			//System.out.println("wok: " + whiteOkToCastle + " bok: "
@@ -694,21 +694,21 @@ public class GameState {
 	}
 
 	private final static int[][] knV = { { -1, 2 }, { 1, 2 }, { -2, 1 },
-		{ -2, -1 }, { -1, -2 }, { 1, -2 }, { 2, -1 }, { 2, 1 } };
+			{ -2, -1 }, { -1, -2 }, { 1, -2 }, { 2, -1 }, { 2, 1 } };
 	private final static int[][] vectorsD = { { -1, -1 }, { 1, 1 }, { -1, 1 },
-		{ 1, -1 } };
+			{ 1, -1 } };
 	private final static int[][] vectorsH = { { -1, 0 }, { 1, 0 }, { 0, 1 },
-		{ 0, -1 } };
+			{ 0, -1 } };
 
 
 	//this function will add flags for x,y if disambiguation is needed in shortnotation.
 	private void disambiguate(Move m) {
 		int x, y;
-		final Cord p=new Cord(m.getToRow(),m.getToRow());
-		final Cord bv = getVector(m.getToRow(),m.getToRow(),m.getFromColumn(),m.getFromRow());
+		final Cord p=new Cord(m.getToColumn(),m.getToRow());
+		final Cord bv = getVector(m.getToColumn(),m.getToRow(),m.getFromColumn(),m.getFromRow());
 		if (ChessConstants.isKnight(m.pieceId)) {
 			for (int i = 0; i < 8; i++) {
-				x = knV[i][0] + m.getToRow();
+				x = knV[i][0] + m.getToColumn();
 				y = knV[i][1] + m.getToRow();
 				if ( bb.inBoard(y)&& bb.inBoard(x)&&pos.get(x, y) == m.pieceId
 						&& !((x == m.getFromColumn()) && (y == m.getFromRow()))
@@ -720,22 +720,22 @@ public class GameState {
 		if (ChessConstants.isBishop(m.pieceId)
 				|| ChessConstants.isQueen(m.pieceId)) {
 
-			for(int i=0;i<4;i++) {		
-				if (bv.column ==vectorsD[i][0]&&bv.row ==vectorsD[i][1])
+			for(int i=0;i<4;i++) {
+				if (bv.column==vectorsD[i][0]&&bv.row==vectorsD[i][1])
 					continue;
 				if (checkDiagonalVectors(i,!this.whiteToMove,p)&&pos.get(tmpChk.column,tmpChk.row)==m.pieceId) {
 					addNotation(m,tmpChk.column,tmpChk.row);
-				}		
+				}
 			}
-		}	
+		}
 		if (ChessConstants.isRook(m.pieceId)||
 				ChessConstants.isQueen(m.pieceId)) {
-			for(int i=0;i<4;i++) {		
-				if (bv.column ==vectorsH[i][0]&&bv.row ==vectorsH[i][1])
+			for(int i=0;i<4;i++) {
+				if (bv.column==vectorsH[i][0]&&bv.row==vectorsH[i][1])
 					continue;
 				if (checkHorizontalVectors(i,!this.whiteToMove,p)&&pos.get(tmpChk.column,tmpChk.row)==m.pieceId) {
 					addNotation(m,tmpChk.column,tmpChk.row);
-				}		
+				}
 			}
 
 		}
@@ -764,7 +764,7 @@ public class GameState {
 					whiteKingPos = new Cord(i, j);
 			}
 		}
-		//Log.d("schack","White king is at "+whiteKingPos.x+","+whiteKingPos.y);
+		//Log.d("schack","White king is at "+whiteKingPos.column+","+whiteKingPos.row);
 	}
 
 	private boolean checkIfOk(int x, int y) {
@@ -800,7 +800,7 @@ public class GameState {
 			for (Move m:moves) {
 				//gs.classifyMove(m);
 				nextState = makeMove(m);
-				if(nextState != null) 
+				if(nextState != null)
 					return true;
 			}
 
@@ -858,7 +858,7 @@ public class GameState {
 	}
 
 	private static final String f[] = { "K", "Q", "B", "N", "R", "P", "k", "q",
-		"b", "n", "r", "p" };
+			"b", "n", "r", "p" };
 	private static final String s[] = { "A", "B", "C", "D", "E", "F", "G", "H" };
 
 	private static int getPieceRep(char c) {
@@ -883,9 +883,9 @@ public class GameState {
 					int piece = getPieceRep(c);
 					if (piece == -1) {
 						System.out
-						.println("Misformed fen. This is not a piece: "
-								+ c + " p is " + p + " i j " + i + " "
-								+ j);
+								.println("Misformed fen. This is not a piece: "
+										+ c + " p is " + p + " i j " + i + " "
+										+ j);
 						throw new IllegalArgumentException("FEN MISFORMED");
 					} else {
 						ret[i % 8][j] = piece;
@@ -948,7 +948,7 @@ public class GameState {
 		int escapeRoutes = 0;
 		Cord k = new Cord();
 		k.set(getKingPosition(color).column, getKingPosition(color).row);
-		// System.out.println("king pos is: "+k.x+" "+k.y);
+		// System.out.println("king pos is: "+k.column+" "+k.row);
 		for (int i = 0; i < 8; i++) {
 			k.set(getKingPosition(color).column + xx[i], getKingPosition(color).row
 					+ yy[i]);
@@ -957,33 +957,33 @@ public class GameState {
 			if (kingDistanceOk(getKingPosition(!color), k)) {
 				if (!inCheck(color, k)) {
 					if (pos.get(k.column, k.row) == ChessConstants.B_EMPTY) {
-						//							System.out.println("escape:" + k.x + " " + k.y
+						//							System.out.println("escape:" + k.column + " " + k.row
 						//									+ "empty+nocheck...");
 						escapeRoutes++;
 					} else {
-						//							System.out.println("noescape:" + k.x + " " + k.y
+						//							System.out.println("noescape:" + k.column + " " + k.row
 						//									+ " not empty...");
 						if (ChessConstants.isWhite(pos.get(k.column, k.row)) != color)
 							escapeRoutes++;
 						//							else
-						//								System.out.println("noescape: " + k.x + " " + k.y
+						//								System.out.println("noescape: " + k.column + " " + k.row
 						//										+ " has same color");
 					}
-				}					
+				}
 				//						else
-				//						System.out.println("noescape:" + k.x + " " + k.y
+				//						System.out.println("noescape:" + k.column + " " + k.row
 				//								+ " in check");
-			} 
+			}
 			//				else
-			//					System.out.println("noescape:" + k.x + " " + k.y
+			//					System.out.println("noescape:" + k.column + " " + k.row
 			//							+ " too close to king");
 
 		}
 		//Log.d("schack","found "+escapeRoutes+" escapeRoutes");
 		return escapeRoutes;
-	}	
-	
-	
+	}
+
+
 	public void addMoves(List<Move> result,int fromc,int fromr, long moves) {
 		for(int row=0; row<8;row++) {
 			for(int column=0;column<8;column++) {

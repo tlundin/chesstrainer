@@ -103,8 +103,10 @@ public class Tools {
 			Cord toC = new Cord(to);
 			Move m = new Move(fromC,toC);
 			ml.getCurrentPosition().classifyMove(m);
-			if (m.moveType == Move.pawnPromoteF)
+			if (m.moveType == Move.pawnPromoteF) {
+				Log.d("x","getzzzz");
 				m.promotePiece = ChessConstants.getQueen(ChessConstants.isWhite(m.pieceId));
+			}
 			ml.add(new GameState(ml.getCurrentPosition(),m));
 			//create new empty gamestate;
 

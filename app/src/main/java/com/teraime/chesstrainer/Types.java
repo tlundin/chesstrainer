@@ -20,13 +20,13 @@ public abstract class Types {
 
 	public static class TacticProblem {
 
-		 public int rd;
-		 public int rating;
+		 public float rd;
+		 public float rating;
 		 public String board;
 		 public String moves;
 		 public boolean whiteToMove;
 		
-		 public TacticProblem(int rd, int rating, String board, String moves,
+		 public TacticProblem(float rd, float rating, String board, String moves,
 				boolean whiteToMove) {
 			this.rd = rd;
 			this.rating = rating;

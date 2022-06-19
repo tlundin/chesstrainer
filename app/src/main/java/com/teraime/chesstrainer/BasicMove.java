@@ -1,8 +1,10 @@
 package com.teraime.chesstrainer;
 
+import android.util.Log;
+
 public class BasicMove {
 
-		protected Cord from,to;
+		public Cord from,to;
 		
 		public BasicMove() {
 			
@@ -33,16 +35,28 @@ public class BasicMove {
 		
 		@Override
 		public boolean equals(Object other) {
-			if (other == null) return false;
-		    if (other == this) return true;
-		    if (!(other instanceof BasicMove))return false;
-		    Move mother = (Move)other;
-			return (this.from.equals(mother.from)&&
+			boolean ret;
+			if (other == null)
+				ret= false;
+		    if (other == this)
+				ret = true;
+		    if (!(other instanceof BasicMove))
+				ret = false;
+		    BasicMove mother = (BasicMove)other;
+
+			ret = (this.from.equals(mother.from)&&
 					this.to.equals(mother.to));
+			Log.d("v","gets with ret "+ret+ "this from "+this.from+" this.to "+this.to);
+			return ret;
 		}
 
 	public Cord getFromCord() {
 			return from;
+	}
+
+	@Override
+	public String toString() {
+			return "FROM "+from.toString()+" TO: "+to.toString();
 	}
 }
 

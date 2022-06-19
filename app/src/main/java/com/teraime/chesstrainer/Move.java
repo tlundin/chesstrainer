@@ -1,14 +1,14 @@
 package com.teraime.chesstrainer;
 
 public class Move extends BasicMove {
-	
+
 	public static final int normalF = 0;
 	public static final int enPassantF = 1;
 	public static final int exchangeF = 2;
 	public static final int pawnPromoteF = 3;
 	public static final int twoStepPawnF = 4;
-	
-	
+
+
 	public int pieceId;
 	public int moveType=normalF;
 	public int promotePiece=ChessConstants.B_EMPTY;
@@ -16,7 +16,10 @@ public class Move extends BasicMove {
 	public boolean disx=false,disy=false;
 	private final static String[] xs = {"a","b","c","d","e","f","g","h"};
 	private final static String[] ys = {"8","7","6","5","4","3","2","1"};
-	
+
+	public Move() {
+
+	}
 
 	public Move(Cord from, Cord to) {
 		super(from,to);
@@ -24,15 +27,15 @@ public class Move extends BasicMove {
 	public Move(int fromX, int fromY, int toX, int toY) {
 		super(new Cord(fromX,fromY),new Cord(toX,toY));
 	}
-	
-	
-	
+
+
+
 	public void set(int x,int y,int xx, int yy) {
 		from = new Cord(x,y);
 		to = new Cord(xx,yy);
 	}
-	
-	
+
+
 	public void set(int id,int moveType,boolean _slag) {
 		pieceId = id;
 		this.moveType = moveType;
@@ -46,55 +49,55 @@ public class Move extends BasicMove {
 		set(id,moveType,false);
 	}
 	*/
-	
+
 	public String getNotation() {
-		if(Move.exchangeF==moveType) 
-			return getFromColumn()< getToRow()?"O-O":"O-O-O";
+		if(Move.exchangeF==moveType)
+			return getFromColumn()<getToColumn()?"O-O":"O-O-O";
 		else
 			return getShortNotation();
 	}
-	
+
 	public String getLongNotation() {
 		return printPiece(pieceId)+xs[getFromColumn()]+ys[getFromRow()]+
-		(slag?"x":"-")+xs[getToRow()]+ys[getToRow()]+(promotePiece==ChessConstants.B_EMPTY?"":"="+printPiece(promotePiece))+(check?"+":"");
+				(slag?"x":"-")+xs[getToColumn()]+ys[getToRow()]+(promotePiece==ChessConstants.B_EMPTY?"":"="+printPiece(promotePiece))+(check?"+":"");
 	}
-	
+
 	public String getShortNotation() {
-		return printPiece(pieceId)+(disx?xs[getFromColumn()]:"")+(disy?ys[getFromRow()]:"")+(slag?"x":"")+xs[getToRow()]+ys[getToRow()]+(promotePiece==ChessConstants.B_EMPTY?"":"="+printPiece(promotePiece))+(check?"+":"");
+		return printPiece(pieceId)+(disx?xs[getFromColumn()]:"")+(disy?ys[getFromRow()]:"")+(slag?"x":"")+xs[getToColumn()]+ys[getToRow()]+(promotePiece==ChessConstants.B_EMPTY?"":"="+printPiece(promotePiece))+(check?"+":"");
 	}
 	//ChessConstants.pieceShortName[pieceId]
 	public String getRawNotation() {
-		return(xs[getFromColumn()]+ys[getFromRow()]+xs[getToRow()]+ys[getToRow()]+(promotePiece==ChessConstants.B_EMPTY?"":"="+ChessConstants.pieceShortName[promotePiece]));
+		return(xs[getFromColumn()]+ys[getFromRow()]+xs[getToColumn()]+ys[getToRow()]+(promotePiece==ChessConstants.B_EMPTY?"":"="+ChessConstants.pieceShortName[promotePiece]));
 	}
-	
+
 	public String getShortNoFancy() {
-		return ChessConstants.pieceShortName[pieceId]+(disx?xs[getFromColumn()]:"")+(disy?ys[getFromRow()]:"")+(slag?"x":"")+xs[getToRow()]+ys[getToRow()]+
-		(promotePiece==ChessConstants.B_EMPTY?"":"="+ChessConstants.pieceShortName[promotePiece])+(check?"+":"");
+		return ChessConstants.pieceShortName[pieceId]+(disx?xs[getFromColumn()]:"")+(disy?ys[getFromRow()]:"")+(slag?"x":"")+xs[getToColumn()]+ys[getToRow()]+
+				(promotePiece==ChessConstants.B_EMPTY?"":"="+ChessConstants.pieceShortName[promotePiece])+(check?"+":"");
 	}
-	
+
 	private static String printPiece(int pieceId) {
 		if (ChessConstants.isPawn(pieceId)||ChessConstants.isEmpty(pieceId))
-				return "";
-			return ChessConstants.pieceShortName[pieceId];
+			return "";
+		return ChessConstants.pieceShortName[pieceId];
 		//return new String("&lt;img border=&quot;0&quot; src=&quot;"+notationBase+ChessConstants.pieceNotationPicName[pieceId]+"&quot; alt=&quot;"+ChessConstants.pieceShortName[pieceId]+"&quot; /&gt;");
 	}
-	
+
 	public void setCheck() {
 		check=true;
 	}
-	
+
 	public boolean isInCheck() {
 		return check;
 	}
-	
+
 	public boolean isInSlag() {
 		return slag;
 	}
-	
+
 	public void setSlag() {
 		slag = true;
 	}
-	
+
 	@Override
 	public boolean equals(Object other) {
 		return super.equals(other);

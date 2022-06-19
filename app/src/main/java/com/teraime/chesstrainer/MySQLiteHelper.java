@@ -92,9 +92,17 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
 	}
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
 	}
 
+
+	public Types.TacticProblem getTacticProblemZ(int minRating, int maxRating) {
+		float rd = 12f,rating=1331.2f;
+		String board = "rrxxxxkxpxqbnxxPRxxpxxxpxxxPxpxxxBPxpbxxxxxxPxxxQxxNxxBPxRxxxxKx";
+		String moves="15:Px:7:xP:,1:rx:33:Br:,33:rR:57:Rx:,10:qx:26:xq:,";
+		boolean whiteToMove=true;
+		return new Types.TacticProblem(rd,rating,board,moves,whiteToMove);
+
+	}
 	public List<Types.TacticProblem> getTacticProblems(int size, int minRating, int maxRating) {
 		//openDataBase();
 		List<Types.TacticProblem> ret = new ArrayList<Types.TacticProblem>();
