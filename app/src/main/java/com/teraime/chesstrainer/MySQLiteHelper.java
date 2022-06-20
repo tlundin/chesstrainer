@@ -129,19 +129,21 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
 	}
 
 
-	public Types.TacticProblem getTacticProblem(int min, int max) {
+	public Types.TacticProblem getTacticProblem(float lastMin) {
 		SQLiteDatabase db = this.getReadableDatabase();
-		Cursor c = db.rawQuery("SELECT * from tactic WHERE rating >"+min+" AND rating <"+max+" ORDER BY RANDOM() LIMIT 1", null);
+		//Cursor c = db.rawQuery("SELECT * from tactic WHERE rating >"+min+" AND rating <"+max+" ORDER BY RANDOM() LIMIT 1", null);
+		Cursor c = db.rawQuery("SELECT * from tactic WHERE rating >"+lastMin+" ORDER BY rating LIMIT 1", null);
 		c.moveToFirst();
-		int rd, rating;
+		float rd, rating;
 		String board,moves,tmp;
 		boolean whiteToMove;
 		rd = c.getInt(1);
-		rating = c.getInt(2);
+		rating = c.getFloat(2);
 		board = c.getString(3);
 		moves = c.getString(4);
 		tmp = c.getString(5);
 		whiteToMove=false;
+		Log.d("v","DB returns "+rating);
 		if (tmp!=null && tmp.equals("w"))
 			whiteToMove = true;
 		return new Types.TacticProblem(rd,rating,board,moves,whiteToMove);

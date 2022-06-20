@@ -48,7 +48,7 @@ public class TacticsHandler implements MoveCallBack_I {
                             board.move(moveList.getCurrentPosition().getMove());
                         } else {
                             board.okAnimate(bMove.to);
-                            gv.scoreChanged();
+                            gv.nextLevel();
                         }
                     } else {
                         board.swellAnimate();
