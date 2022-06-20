@@ -156,7 +156,7 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
         //board.move(new BasicMove(new Cord(4,1),new Cord(4,2)));
         //File dbP = context.getDatabasePath("chess.db");
         //Log.d("db","FILE "+dbP.getAbsolutePath());
-        progressor.scrollAnimate(1,5);
+        progressor.scrollAnimate(1,1);
         if (!moveIsActive) {
             db.openDataBase();
             int noOfProblems = 5;

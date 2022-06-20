@@ -66,10 +66,10 @@ public class Progressor {
             int levelAcc = (stepsTot<10?1:stepsTot<25?2:stepsTot<50?5:10);
             @Override
             public void run() {
+                int scrollDistance = width / 4 * stepsPerIteration;
+                int scrollSteps = 5;
+                int scrollPerIteration = scrollDistance / scrollSteps;
                 while (lC<mStoplevel) {
-                    int scrollDistance = width / 4 * stepsPerIteration;
-                    int scrollSteps = 5;
-                    int scrollPerIteration = scrollDistance / scrollSteps;
                     scrollAnimate = true;
                     while (scrollSteps > 0) {
                         scrollFactor += scrollPerIteration;
