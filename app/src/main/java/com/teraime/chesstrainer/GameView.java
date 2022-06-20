@@ -16,21 +16,17 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
-import org.w3c.dom.Text;
-
-import java.io.File;
-import java.util.List;
-
 public class GameView implements SurfaceHolder.Callback, View.OnClickListener, View.OnTouchListener,SurfaceHolderCallback {
 
 
     private final Context context;
     private Board board;
+    private Progressor progressor;
     private SurfaceHolder mSurfaceHolder = null;
     private boolean moveIsActive = false;
     private MySQLiteHelper db;
     private ChessPosition boardAfterMove;
-    private int boardOffset;
+    private int boardOffset,progressorOffset,progressorHeight;
     TextView scoreT;
     private int score = 0;
 
@@ -47,17 +43,18 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
     public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
         Log.d(TAG,"Surf is good");
         mSurfaceHolder=surfaceHolder;
-        int screenW = surfaceHolder.getSurfaceFrame().width();
-        int screenH = surfaceHolder.getSurfaceFrame().height();
-        boardOffset = (screenH-screenW)/2;
-
-        board = new Board(context,Board.ScaleOptions.MAX, Board.StyleOptions.oak, Board.StyleOptions.fancy,screenW, boardOffset, this);
+        int canvasW = surfaceHolder.getSurfaceFrame().width();
+        int canvasH = surfaceHolder.getSurfaceFrame().height();
+        boardOffset = (int)(Math.abs(canvasH-canvasW));
+        //Board is screenw wide. Let progressor be about two squares wide.
+        progressorHeight = canvasW/4;
+        progressorOffset = boardOffset-progressorHeight;
+        board = new Board(context,Board.ScaleOptions.MAX, Board.StyleOptions.oak, Board.StyleOptions.fancy,canvasW, boardOffset, this);
         ChessPosition pos = new ChessPosition(INITIAL_BOARD);//new ChessPosition(GameState.convertFenToBoard(ChessConstants.FEN_STARTING_POSITION));
         pos.print();
         board.setupPosition(pos);
-        Canvas c = mSurfaceHolder.lockCanvas();
-        board.onDraw(c);
-        mSurfaceHolder.unlockCanvasAndPost(c);
+        progressor = new Progressor(progressorOffset,canvasW,progressorHeight,this);
+        surfaceChanged();
 
     }
 
@@ -75,6 +72,7 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
     public void surfaceChanged() {
         Canvas c = mSurfaceHolder.lockCanvas();
         board.onDraw(c);
+        progressor.onDraw(c);
         mSurfaceHolder.unlockCanvasAndPost(c);
     }
 
@@ -125,7 +123,7 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
             case MotionEvent.ACTION_UP:
                 if (dragActive) {
                     dragActive = false;
-                    BasicMove bMove= board.dropMovingPiece(new Point(x, y-boardOffset), draggedPiece);
+                    BasicMove bMove= board.dropMovingPiece(new Point(x, y- boardOffset), draggedPiece);
                     surfaceChanged();
                     if (dragListener != null) {
                         dragListener.onDragDone(bMove);
@@ -135,7 +133,7 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
             case MotionEvent.ACTION_MOVE:
                 if (dragActive) {
                     int squareSize = board.getSquareSize();
-                    board.movePieceTo(new Point(x-squareSize/2,y-squareSize/2-boardOffset));
+                    board.movePieceTo(new Point(x-squareSize/2,y-squareSize/2- boardOffset));
                     surfaceChanged();
                 }
                 break;
@@ -158,6 +156,7 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
         //board.move(new BasicMove(new Cord(4,1),new Cord(4,2)));
         //File dbP = context.getDatabasePath("chess.db");
         //Log.d("db","FILE "+dbP.getAbsolutePath());
+        progressor.scrollAnimate(1,5);
         if (!moveIsActive) {
             db.openDataBase();
             int noOfProblems = 5;

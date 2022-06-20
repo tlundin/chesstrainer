@@ -42,12 +42,12 @@ public class Board
     final float centerX,centerY;
     private Cord okLocation;
 
-    public Board(Context context, ScaleOptions scaleOption, StyleOptions boardStyle, StyleOptions pieceStyle, int size_with_borders, int bo, SurfaceHolderCallback surfh) {
+    public Board(Context context, ScaleOptions scaleOption, StyleOptions boardStyle, StyleOptions pieceStyle, int size_with_borders, int bo, SurfaceHolderCallback _surfer) {
         int _size = scale(size_with_borders,scaleOption);
         this.boardOffset = bo;
         this.pieceStyle = pieceStyle;
         this.boardStyle = boardStyle;
-        surfer = surfh;
+        surfer = _surfer;
         boardRect = new Rect(0,0,_size,_size);
         Outside = new Cord(-1,-1);
         movingPieceInitialPosition =Outside;
@@ -290,7 +290,7 @@ public class Board
     }
 
     public void onDraw(Canvas c) {
-
+        c.save();
         c.translate(0,boardOffset);
         if (c != null) {
             c.drawColor(Color.BLACK);
@@ -326,15 +326,15 @@ public class Board
                 c.drawBitmap(movingPieceBmp,null,movingRect,p);
             }
             if (okAnimate) {
-                c.save();
+
                 final Point okLocationXY=calculateXYFromGrid(okLocation.column,okLocation.row);
                 c.rotate(swellFactor,okLocationXY.x+getSquareSize()/4,okLocationXY.y+getSquareSize()/4);
                 okRect.offsetTo(okLocationXY.x,okLocationXY.y);
                 c.drawBitmap(okAnimateBmp,null,okRect,p);
             }
-            if (swellAnimate || okAnimate )
-                c.restore();
-
+            //if (swellAnimate || okAnimate )
+            //    c.restore();
+            c.restore();
 
         }
 
