@@ -76,8 +76,16 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
         mSurfaceHolder.unlockCanvasAndPost(c);
     }
 
-    public void scoreChanged() {
-        scoreT.setText(""+score++);
+    public void nextLevel() {
+        try {
+            scoreT.setText("" + score++);
+            Thread.sleep(500);
+            progressor.scrollAnimate(1, 1);
+            onTestClick();
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -152,6 +160,7 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
         }
     }
 
+    float lastmin=0;
     public void onTestClick() {
         //board.move(new BasicMove(new Cord(4,1),new Cord(4,2)));
         //File dbP = context.getDatabasePath("chess.db");
@@ -162,7 +171,9 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
             int noOfProblems = 5;
             int minProbLvl = 1500;
             int maxProbLvl = 2000;
-            Types.TacticProblem problem = db.getTacticProblem(minProbLvl, maxProbLvl);
+            Types.TacticProblem problem = db.getTacticProblem(lastmin);
+            lastmin = problem.rating;
+            Log.d("v","lastmin now "+lastmin);
             int[][] pos = Tools.translateBoard(problem.board);
             MoveList ml = new MoveList();
             ml.add(new GameState(pos, problem.whiteToMove));

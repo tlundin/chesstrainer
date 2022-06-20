@@ -295,7 +295,6 @@ public class Board
         if (c != null) {
             c.drawColor(Color.BLACK);
             if (swellAnimate) {
-                c.save();
                 c.scale(swellFactor, swellFactor,centerX,centerY);
             }
             if (hasEdge) {
