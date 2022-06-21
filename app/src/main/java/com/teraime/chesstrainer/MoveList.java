@@ -32,6 +32,12 @@ public class MoveList extends LinkedList<GameState> {
 		} else
 			return false;
 	}
+
+	public GameState getPrevious() {
+		if (currentPosition-1 > 0)
+			return this.get(currentPosition-1);
+		return null;
+	}
 	
 	public boolean hasNext(){
 		return (currentPosition< this.size()-1);

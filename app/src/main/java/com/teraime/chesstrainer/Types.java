@@ -20,19 +20,22 @@ public abstract class Types {
 
 	public static class TacticProblem {
 
+
 		 public float rd;
 		 public float rating;
 		 public String board;
 		 public String moves;
 		 public boolean whiteToMove;
+		 public Progressor.Difficulty difficulty;
 		
 		 public TacticProblem(float rd, float rating, String board, String moves,
-				boolean whiteToMove) {
+							  boolean whiteToMove, Progressor.Difficulty difficulty) {
 			this.rd = rd;
 			this.rating = rating;
 			this.board = board;
 			this.moves = moves;
 			this.whiteToMove = whiteToMove;
+			this.difficulty = difficulty;
 		}
 	 
 	 }

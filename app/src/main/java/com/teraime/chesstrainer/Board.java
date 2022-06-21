@@ -24,6 +24,8 @@ public class Board
     final Paint edgeColor = new Paint();
     final Paint bgColor = new Paint(Color.BLACK);
     final Paint p = new Paint();
+    final Paint sg = new Paint();
+    final Paint wh = new Paint();
     final Bitmap edgeHorisontal,edgeVertical,w_square,b_square;
     final Bitmap w_knight,w_bishop,w_king,w_rook,w_pawn,w_queen;
     final Bitmap b_knight,b_bishop,b_king,b_rook,b_pawn,b_queen;
@@ -36,11 +38,12 @@ public class Board
     private boolean whiteOnTop = false;
     private Cord movingPieceInitialPosition,Outside;
     private Bitmap movingPieceBmp,okAnimateBmp;
-    private Rect movingRect,okRect;
+    private Rect dragRect,moveRect,okRect;
     private SurfaceHolderCallback surfer;
     private int boardOffset;
     final float centerX,centerY;
     private Cord okLocation;
+    private boolean dragActive = false, moveActive = false;
 
     public Board(Context context, ScaleOptions scaleOption, StyleOptions boardStyle, StyleOptions pieceStyle, int size_with_borders, int bo, SurfaceHolderCallback _surfer) {
         int _size = scale(size_with_borders,scaleOption);
@@ -48,10 +51,11 @@ public class Board
         this.pieceStyle = pieceStyle;
         this.boardStyle = boardStyle;
         surfer = _surfer;
+        sg.setColor(Color.parseColor("#798A80"));
+        wh.setColor(Color.parseColor("#F8F4EC"));
         boardRect = new Rect(0,0,_size,_size);
         Outside = new Cord(-1,-1);
         movingPieceInitialPosition =Outside;
-
         centerX = boardRect.width()/2;
         centerY = boardRect.height()/2;
         switch (boardStyle) {
@@ -82,6 +86,8 @@ public class Board
         int top = 0;int left=0;int bottom=0;int right=0;
         int i=0;
         int square_size = getSquareSize();
+        dragRect = new Rect(0,0,(int)(square_size*GameView.DragRectSize),(int)(square_size*GameView.DragRectSize));
+        moveRect = new Rect(0,0,square_size,square_size);
         for(int row=0; row<8 ; row++) {
             for (int column=0; column<8 ; column++) {
                 left   = border_thickness+column*square_size;
@@ -95,8 +101,7 @@ public class Board
         okRect = new Rect(0,0,square_size/2,square_size/2);
         okAnimateBmp = BitmapFactory.decodeResource(context.getResources(),R.drawable.ok_icon);
         switch (pieceStyle) {
-            case oak:
-            default:
+            case fancy:
                 w_knight = BitmapFactory.decodeResource(context.getResources(),R.drawable.w_knight);
                 w_bishop = BitmapFactory.decodeResource(context.getResources(),R.drawable.w_bishop);
                 w_king = BitmapFactory.decodeResource(context.getResources(),R.drawable.w_king);
@@ -109,8 +114,29 @@ public class Board
                 b_rook = BitmapFactory.decodeResource(context.getResources(),R.drawable.b_rook);
                 b_pawn = BitmapFactory.decodeResource(context.getResources(),R.drawable.b_pawn);
                 b_queen = BitmapFactory.decodeResource(context.getResources(),R.drawable.b_queen);
-                pieceBox = new Bitmap[]{null,w_king,w_queen,w_bishop,w_knight,w_rook,w_pawn,b_king,b_queen,b_bishop,b_knight,b_rook,b_pawn};
+
+                break;
+            case plain:
+            default:
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inScaled = false;
+                Bitmap piecesBMP = BitmapFactory.decodeResource(context.getResources(),R.drawable.chess_plain,options);
+                Log.d("farko","W "+piecesBMP.getWidth()+"H: "+piecesBMP.getHeight());
+                b_rook = Bitmap.createBitmap(piecesBMP,0,50,300,300);
+                b_bishop =  Bitmap.createBitmap(piecesBMP,300,50,300,300);
+                b_queen = Bitmap.createBitmap(piecesBMP,600,50,300,300);
+                b_king = Bitmap.createBitmap(piecesBMP,900,50,300,300);
+                b_knight = Bitmap.createBitmap(piecesBMP,1200,50,300,300);
+                b_pawn = Bitmap.createBitmap(piecesBMP,1500,50,300,300);
+                w_rook = Bitmap.createBitmap(piecesBMP,0,425,300,300);
+                w_bishop =  Bitmap.createBitmap(piecesBMP,300,425,300,300);
+                w_queen = Bitmap.createBitmap(piecesBMP,600,425,300,300);
+                w_king = Bitmap.createBitmap(piecesBMP,900,425,300,300);
+                w_knight = Bitmap.createBitmap(piecesBMP,1200,425,300,300);
+                w_pawn = Bitmap.createBitmap(piecesBMP,1500,425,300,300);
+            break;
         }
+        pieceBox = new Bitmap[]{null,w_king,w_queen,w_bishop,w_knight,w_rook,w_pawn,b_king,b_queen,b_bishop,b_knight,b_rook,b_pawn};
     }
 
     public Bitmap[] getPieceBox() {
@@ -129,21 +155,28 @@ public class Board
         mPosition = position;
     }
 
-    public int dragIfPiece(int x, int y) {
-        y-= boardOffset;
+    public int getPiece(int x, int y) {
         if (isInside(x,y)) {
             Cord p = calculateColRow(x,y);
             Log.d("x","col:"+p.getColumn()+" row:"+p.getRow());
             int piece = mPosition.get(p.getColumn(),p.getRow());
             if (piece != ChessConstants.B_EMPTY) {
-                movingPieceInitialPosition = p;
                 return piece;
             }
         }
         return -1;
     }
 
-    private Cord calculateColRow(int x, int y) {
+    public void startDrag(Cord p, int draggedPiece) {
+        Bitmap draggedPieceBmp = getPieceBox()[draggedPiece];
+        int squareSize = getSquareSize();
+        movingPieceBmp=draggedPieceBmp;
+        movingPieceInitialPosition = p;
+        dragActive=true;
+
+    }
+
+    public Cord calculateColRow(int x, int y) {
         int column = (x-border_thickness)/getSquareSize();
         int row = (y-border_thickness)/getSquareSize();
         int flip_row = whiteOnTop ?7-row:row;
@@ -167,12 +200,13 @@ public class Board
             movingPieceEndPosition = calculateColRow(x, y);
             mPosition.put(movingPieceInitialPosition.getColumn(), movingPieceInitialPosition.getRow(), ChessConstants.B_EMPTY);
             mPosition.put(movingPieceEndPosition.getColumn(), movingPieceEndPosition.getRow(), piece);
-            bMove = new BasicMove(movingPieceInitialPosition,movingPieceEndPosition);
+            if (!(movingPieceInitialPosition.equals(movingPieceEndPosition)))
+                bMove = new BasicMove(movingPieceInitialPosition,movingPieceEndPosition);
         }
 
         movingPieceInitialPosition = Outside;
-        movingRect = null;
         movingPieceBmp = null;
+        dragActive=false;
         return bMove;
     }
 
@@ -184,10 +218,7 @@ public class Board
         return gridSize/8;
     }
 
-    public void initialiseMoveRect(Rect dragRect, Bitmap draggedPieceBmp) {
-        movingRect=dragRect;
-        movingPieceBmp=draggedPieceBmp;
-    }
+
 
     public void setWhiteOnTop() {
         whiteOnTop=true;
@@ -216,6 +247,7 @@ public class Board
 
     final Handler animationHandler = new Handler(Looper.myLooper());
 
+
     public void move(Move move) {
         surfer.moveIsActive();
        movingPieceInitialPosition=move.getFromCord();
@@ -224,19 +256,21 @@ public class Board
        int movingPieceId = mPosition.get(move.getFromColumn(),move.getFromRow());
        movingPieceBmp = pieceBox[movingPieceId];
        int squareSize = getSquareSize();
-       movingRect = new Rect(0,0,squareSize,squareSize);
        Point[] pointsOnTheWay = PathFactory.generate(Linear,movingPiecePosition,movingPieceDestination);
        animationHandler.post(new Runnable() {
            int count = 0;
            @Override
            public void run() {
+               moveActive = true;
                while(count<pointsOnTheWay.length) {
-                   movePieceTo(pointsOnTheWay[count]);
+                   moveRect.offsetTo(pointsOnTheWay[count].x,pointsOnTheWay[count].y);
                    invalidateView();
                    count++;
                }
                dropMovingPiece(movingPieceDestination, movingPieceId);
+               moveActive = false;
                surfer.moveIsDone();
+
            }
        });
     }
@@ -244,7 +278,7 @@ public class Board
     boolean swellAnimate = false, okAnimate=false;
     float swellFactor=1f;
 
-    public void okAnimate(Cord location) {
+    public void okAnimate(Cord location, AnimationDoneListener animationDoneListener) {
         final float[] swellFactors = new float[]{0,45,90,180,245,360};
 
         animationHandler.post(new Runnable() {
@@ -259,10 +293,11 @@ public class Board
                     count++;
                 }
                 okAnimate=false;
+                animationDoneListener.onAnimationDone();
             }
         });
     }
-    public void swellAnimate() {
+    public void swellAnimate(AnimationDoneListener animationDoneListener) {
         final float[] swellFactors = new float[]{1.05f,1.06f,1.1f,1.1f,1.06f,1.05f,1};
 
         animationHandler.post(new Runnable() {
@@ -276,13 +311,14 @@ public class Board
                     count++;
                 }
                 swellAnimate=false;
+                animationDoneListener.onAnimationDone();
             }
         });
     }
 
 
-    public void movePieceTo(Point point) {
-        movingRect.offsetTo(point.x,point.y);
+    public void moveDragRect(Point point) {
+        dragRect.offsetTo(point.x,point.y);
     }
 
     private void invalidateView() {
@@ -305,11 +341,15 @@ public class Board
             }
             int i = 0;
             Bitmap square = w_square;
+            Paint worb;
             for (int row = 0; row < 8; row++) {
-                square = (square == w_square) ? b_square : w_square;
+                //square = (square == w_square) ? b_square : w_square;
                 for (int column = 0; column < 8; column++) {
-                    square = (square == w_square) ? b_square : w_square;
-                    c.drawBitmap(square, null, squares[i], p);
+                    //square = (square == w_square) ? b_square : w_square;
+                    //c.drawBitmap(square, null, squares[i], p);
+                    worb = (column%2+row%2)%2==0 ? wh:sg;
+                    c.drawRect(squares[i],worb);
+
                     int flip_row = whiteOnTop ? 7 - row : row;
                     int flip_column = whiteOnTop ? 7 - column : column;
                     //Don't draw The moving piece
@@ -321,8 +361,11 @@ public class Board
                     i++;
                 }
             }
-            if(movingRect!=null) {
-                c.drawBitmap(movingPieceBmp,null,movingRect,p);
+            if (dragActive) {
+                c.drawBitmap(movingPieceBmp,null, dragRect,p);
+            }
+            if (moveActive) {
+                c.drawBitmap(movingPieceBmp,null, moveRect,p);
             }
             if (okAnimate) {
 

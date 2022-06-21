@@ -5,4 +5,5 @@ public interface SurfaceHolderCallback {
 
     void moveIsActive();
     void moveIsDone();
+    Progressor.Difficulty getDifficulty(int level);
 }

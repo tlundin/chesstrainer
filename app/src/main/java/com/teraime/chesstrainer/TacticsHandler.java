@@ -18,6 +18,7 @@ public class TacticsHandler implements MoveCallBack_I {
     public void onMoveDone() {
         Log.d("schack", "move done. Now waiting for player input");
         GameState newState = moveList.getCurrentPosition();
+        gv.setCurrentGameState(newState);
         int result = newState.checkForEndConditions();
         if (result != GameResult.NORMAL) {
             if (result == GameResult.MATE) {
@@ -36,29 +37,37 @@ public class TacticsHandler implements MoveCallBack_I {
     public void onDragDone(BasicMove bMove) {
         if(bMove != null) {
             Log.d("schack", "player moved " + bMove.toString());
-            if (!bMove.equals(moveList.getCurrentPosition().getMove())) {
-                if (moveList.goForward()) {
-                    GameState newState = moveList.getCurrentPosition();
-                    Move moveThatLeadHere = newState.getMove();
-                    Log.d("schack", "correct move " + moveThatLeadHere.getShortNoFancy());
-                    if (moveThatLeadHere.equals(bMove)) {
-                        Log.d("v", "CORRECT!");
-                        if (moveList.goForward()) {
-                            Log.d("v", "another move!");
-                            board.move(moveList.getCurrentPosition().getMove());
-                        } else {
-                            board.okAnimate(bMove.to);
-                            gv.nextLevel();
-                        }
+
+            if (moveList.goForward()) {
+                GameState newState = moveList.getCurrentPosition();
+                Move moveThatLeadHere = newState.getMove();
+                Log.d("schack", "correct move " + moveThatLeadHere.getShortNoFancy());
+                if (moveThatLeadHere.equals(bMove)) {
+                    Log.d("v", "CORRECT!");
+                    if (moveList.goForward()) {
+                        Log.d("v", "another move!");
+                        board.move(moveList.getCurrentPosition().getMove());
                     } else {
-                        board.swellAnimate();
-                        Log.d("v", "WRONG MOVE - Correct was " + moveThatLeadHere.getShortNoFancy());
+                        board.okAnimate(bMove.to, new AnimationDoneListener() {
+                            @Override
+                            public void onAnimationDone() {
+                                gv.nextLevel();
+                            }
+                        });
                     }
-
-
+                } else {
+                    board.swellAnimate(new AnimationDoneListener() {
+                        @Override
+                        public void onAnimationDone() {
+                            gv.onFail();
+                        }
+                    });
+                    //Log.d("v", "WRONG MOVE - Correct was " + moveThatLeadHere.getShortNoFancy());
                 }
-            } else
-                Log.d("v", "skip on equal");
+
+
+            }
+
         }
     }
 }

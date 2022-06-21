@@ -24,6 +24,13 @@
         android:textColor="@color/white"
         android:background="@color/dk_gray"
         android:textSize="20sp" />
+    <ImageButton
+        android:id="@+id/retry"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        android:background="@drawable/retry"/>
     <LinearLayout
         android:id="@+id/bbar"
         android:layout_width="match_parent"

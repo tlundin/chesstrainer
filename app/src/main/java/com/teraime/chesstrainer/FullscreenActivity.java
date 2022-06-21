@@ -10,12 +10,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.MotionEvent;
-import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowInsets;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.teraime.chesstrainer.databinding.ActivityFullscreenBinding;
@@ -98,11 +97,12 @@ public class FullscreenActivity extends AppCompatActivity {
         Button flipButton = binding.flip;
         Button testButton = binding.test;
         Button resetButton = binding.reset;
+        ImageButton retry = binding.retry;
         scoreT = binding.score;
 
         SurfaceView sf = (SurfaceView)mContentView;
 
-        GameView game = new GameView(this,createDB(),scoreT);
+        GameView game = new GameView(this,createDB(),scoreT,retry);
         sf.getHolder().addCallback(game);
         sf.setOnClickListener(game);
         sf.setOnTouchListener(game);

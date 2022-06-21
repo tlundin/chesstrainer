@@ -12,8 +12,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 public class MySQLiteHelper extends SQLiteOpenHelper {
 
@@ -100,40 +101,89 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
 		String board = "rrxxxxkxpxqbnxxPRxxpxxxpxxxPxpxxxBPxpbxxxxxxPxxxQxxNxxBPxRxxxxKx";
 		String moves="15:Px:7:xP:,1:rx:33:Br:,33:rR:57:Rx:,10:qx:26:xq:,";
 		boolean whiteToMove=true;
-		return new Types.TacticProblem(rd,rating,board,moves,whiteToMove);
+		return new Types.TacticProblem(rd,rating,board,moves,whiteToMove, Progressor.Difficulty.normal);
 
+	}
+	public List<Types.TacticProblem> getTacticProblems(int size, int minRating) {
+		return getTacticProblems(size,minRating,-1);
 	}
 	public List<Types.TacticProblem> getTacticProblems(int size, int minRating, int maxRating) {
 		//openDataBase();
-		List<Types.TacticProblem> ret = new ArrayList<Types.TacticProblem>();
+		List<Types.TacticProblem> ret = new LinkedList<Types.TacticProblem>();
 		SQLiteDatabase db = this.getReadableDatabase();
-		Cursor c = db.rawQuery("SELECT * from tactic WHERE rating >"+minRating+" AND rating <"+maxRating+" ORDER BY RANDOM() LIMIT "+size, null);
+		Cursor c;
+		Cursor d;
+		Cursor e;
+		//if (maxRating > 0)
+		//	c = db.rawQuery("SELECT * from tactic WHERE rating >"+minRating+" AND rating <"+maxRating+" ORDER BY RANDOM() LIMIT "+size, null);
+
+		c = db.rawQuery("SELECT * from tactic WHERE rating >"+minRating+" ORDER BY rating LIMIT "+size, null);
+		d = db.rawQuery("SELECT * from tactic WHERE rating >"+(minRating+100)+" ORDER BY rating LIMIT "+size/10, null);
+		e = db.rawQuery("SELECT * from tactic WHERE rating >"+(minRating+200)+" ORDER BY rating LIMIT "+size/10, null);
 		c.moveToFirst();
+		d.moveToFirst();
+		e.moveToFirst();
 		int rd, rating;
 		String board,moves,tmp;
 		boolean whiteToMove;
+		Random r = new Random();
+		int lvlC = 1;
 		while(!c.isAfterLast()) {
-			rd = c.getInt(1);
-			rating = c.getInt(2);
-			board = c.getString(3);
-			moves = c.getString(4);
-			tmp = c.getString(5);
-			whiteToMove=false;
-			if (tmp!=null && tmp.equals("w"))
-				whiteToMove = true;
-			ret.add(new Types.TacticProblem(rd,rating,board,moves,whiteToMove));
+			if (lvlC%5==0) {
+				if (r.nextBoolean() && !d.isAfterLast()) {
+					rd = d.getInt(1);
+					rating = d.getInt(2);
+					board = d.getString(3);
+					moves = d.getString(4);
+					tmp = d.getString(5);
 
-			c.moveToNext();
+					whiteToMove = false;
+					if (tmp != null && tmp.equals("w"))
+						whiteToMove = true;
+					ret.add(new Types.TacticProblem(rd, rating, board, moves, whiteToMove, Progressor.Difficulty.hard));
+					d.moveToNext();
+				} else {
+					if (!e.isAfterLast()) {
+						rd = e.getInt(1);
+						rating = e.getInt(2);
+						board = e.getString(3);
+						moves = e.getString(4);
+						tmp = e.getString(5);
+						whiteToMove = false;
+						if (tmp != null && tmp.equals("w"))
+							whiteToMove = true;
+						ret.add(new Types.TacticProblem(rd, rating, board, moves, whiteToMove, Progressor.Difficulty.nightmare));
+						e.moveToNext();
+					}
+				}
+			} else {
+				rd = c.getInt(1);
+				rating = c.getInt(2);
+				board = c.getString(3);
+				moves = c.getString(4);
+				tmp = c.getString(5);
+				whiteToMove=false;
+				if (tmp!=null && tmp.equals("w"))
+					whiteToMove = true;
+				ret.add(new Types.TacticProblem(rd,rating,board,moves,whiteToMove,Progressor.Difficulty.normal));
+				c.moveToNext();
+			}
+			lvlC++;
 		}
 		return ret;
 	}
 
 
-	public Types.TacticProblem getTacticProblem(float lastMin) {
+	public Types.TacticProblem getTacticProblem(float lastMin, int plusLevel) {
 		SQLiteDatabase db = this.getReadableDatabase();
 		//Cursor c = db.rawQuery("SELECT * from tactic WHERE rating >"+min+" AND rating <"+max+" ORDER BY RANDOM() LIMIT 1", null);
-		Cursor c = db.rawQuery("SELECT * from tactic WHERE rating >"+lastMin+" ORDER BY rating LIMIT 1", null);
+		Cursor c = db.rawQuery("SELECT * from tactic WHERE rating >"+lastMin+" ORDER BY rating LIMIT "+plusLevel, null);
 		c.moveToFirst();
+		for (int i=0;i<c.getCount();i++) {
+			Log.d("v","int rating for "+i+" is "+c.getFloat(2));
+			c.moveToNext();
+		}
+		c.moveToLast();
 		float rd, rating;
 		String board,moves,tmp;
 		boolean whiteToMove;
@@ -143,10 +193,10 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
 		moves = c.getString(4);
 		tmp = c.getString(5);
 		whiteToMove=false;
-		Log.d("v","DB returns "+rating);
+		Log.d("v","DB returns "+rating+" from "+c.getCount()+" results. Pluslevel is "+plusLevel);
 		if (tmp!=null && tmp.equals("w"))
 			whiteToMove = true;
-		return new Types.TacticProblem(rd,rating,board,moves,whiteToMove);
+		return new Types.TacticProblem(rd,rating,board,moves,whiteToMove, Progressor.Difficulty.normal);
 
 	}
 
