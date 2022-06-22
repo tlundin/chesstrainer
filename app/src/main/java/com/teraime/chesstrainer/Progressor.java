@@ -45,7 +45,7 @@ public class Progressor {
         width=_width; height = _height;
         ballRadius = height/5;
         skullSize = ballRadius*2;
-        centre=height-ballRadius-boardMargin-20;
+        centre=height/2-boardMargin;
         ballSpacing = ballRadius*5;
         pStartOffsetX = width/4;
         pR.setStyle(Paint.Style.STROKE);
@@ -54,7 +54,7 @@ public class Progressor {
         pB.setColor(Color.WHITE);
         pT.setStyle(Paint.Style.FILL);
         pT.setColor(Color.GREEN);
-        pL.setStyle(Paint.Style.FILL);
+        pL.setStyle(Paint.Style.STROKE);
         gradientP = drawGradient();
         //PathEffect effects = new DashPathEffect(new float[]{15,8,15,8},0);
         //pL.setPathEffect(effects);
@@ -143,6 +143,7 @@ public class Progressor {
                 c.drawBitmap(difficulty==Difficulty.nightmare?skull:grimreaper, null, diffRect, pR);
             }
         }
+        c.drawRect(width/2-ballRadius,centre-ballRadius,width/2+ballRadius,centre+ballRadius,pL);
         c.restore();
     }
 
@@ -154,7 +155,7 @@ public class Progressor {
         paint.setColor(Color.BLACK);
 
         Shader mShader = new LinearGradient(0, 0, 0, height, new int[] {
-                Color.GRAY,Color.GRAY, Color.DKGRAY, Color.BLACK },
+                Color.BLACK,Color.GRAY, Color.BLACK },
                 null, Shader.TileMode.REPEAT);  // CLAMP MIRROR REPEAT
 
         paint.setShader(mShader);
