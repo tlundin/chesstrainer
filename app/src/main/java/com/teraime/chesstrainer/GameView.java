@@ -74,7 +74,8 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
         mSurfaceHolder=surfaceHolder;
         int canvasW = surfaceHolder.getSurfaceFrame().width();
         int canvasH = surfaceHolder.getSurfaceFrame().height();
-        boardOffset = (int)(Math.abs(canvasH-canvasW));
+        Log.d("zurf","CANVAS "+canvasW+" "+canvasH);
+        boardOffset = canvasH/3;
         //Board is screenw wide. Let progressor be about two squares wide.
         progressorHeight = canvasW/3;
         progressorOffset = boardOffset-progressorHeight;
@@ -99,10 +100,12 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
 
     @Override
     public void surfaceChanged() {
-        Canvas c = mSurfaceHolder.lockCanvas();
-        board.onDraw(c);
-        progressor.onDraw(c);
-        mSurfaceHolder.unlockCanvasAndPost(c);
+        if (mSurfaceHolder != null) {
+            Canvas c = mSurfaceHolder.lockCanvas();
+            board.onDraw(c);
+            progressor.onDraw(c);
+            mSurfaceHolder.unlockCanvasAndPost(c);
+        }
     }
 
     public void onFail() {

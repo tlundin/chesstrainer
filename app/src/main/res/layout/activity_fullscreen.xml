@@ -10,14 +10,16 @@
 
         <SurfaceView
             android:id="@+id/chess_bg"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="0"
             >
         </SurfaceView>
     <TextView
         android:id="@+id/score"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_weight="1"
         android:textStyle="bold"
         android:text="TEST"
         android:textAlignment="center"
@@ -26,6 +28,7 @@
         android:textSize="20sp" />
     <ImageButton
         android:id="@+id/retry"
+        android:layout_weight="1"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:layout_gravity="center"
@@ -33,6 +36,7 @@
         android:background="@drawable/retry"/>
     <LinearLayout
         android:id="@+id/bbar"
+        android:layout_weight="1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"

@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowInsets;
@@ -64,12 +65,16 @@ public class FullscreenActivity extends AppCompatActivity {
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                         | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
             }
+
+
         }
     };
 
 
     private boolean mVisible;
     private TextView scoreT;
+    private GameView game;
+
     private final Runnable mHideRunnable = new Runnable() {
         @Override
         public void run() {
@@ -90,19 +95,18 @@ public class FullscreenActivity extends AppCompatActivity {
 
         binding = ActivityFullscreenBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
-        mVisible = true;
-
         mContentView = binding.chessBg;
+        mVisible = true;
         Button flipButton = binding.flip;
         Button testButton = binding.test;
         Button resetButton = binding.reset;
         ImageButton retry = binding.retry;
         scoreT = binding.score;
+        Log.d("zurf","gets");
 
         SurfaceView sf = (SurfaceView)mContentView;
 
-        GameView game = new GameView(this,createDB(),scoreT,retry);
+        game = new GameView(this,createDB(),scoreT,retry);
         sf.getHolder().addCallback(game);
         sf.setOnClickListener(game);
         sf.setOnTouchListener(game);
@@ -125,7 +129,6 @@ public class FullscreenActivity extends AppCompatActivity {
             }
         });
 
-
     }
 
 
@@ -136,9 +139,28 @@ public class FullscreenActivity extends AppCompatActivity {
         // Trigger the initial hide() shortly after the activity has been
         // created, to briefly hint to the user that UI controls
         // are available.
-        delayedHide(100);
+
     }
 
+    @Override
+    protected void onResume() {
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.hide();
+        }
+        if (Build.VERSION.SDK_INT >= 30) {
+            mContentView.getWindowInsetsController().hide(
+                    WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+        } else {
+            mContentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        }
+        super.onResume();
+    }
 
     private void hide() {
         // Hide UI first

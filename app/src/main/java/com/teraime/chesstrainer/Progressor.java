@@ -9,6 +9,7 @@ import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Shader;
+import android.graphics.SweepGradient;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -34,8 +35,8 @@ public class Progressor {
     int scrollFactor=0;int textSize;
     final Handler animationHandler = new Handler(Looper.myLooper());
     final SurfaceHolderCallback surfer;
-    final Rect diffRect;
-    final Bitmap skull,grimreaper;
+    final Rect diffRect,goalRect;
+    final Bitmap skull,grimreaper,goalflag;
     private Paint gradientP;
 
 
@@ -68,8 +69,10 @@ public class Progressor {
         pBlack.setFilterBitmap(true);
         pBlack.setDither(true);
         diffRect = new Rect(0,0,skullSize,skullSize);
+        goalRect = new Rect(0,0,skullSize,skullSize);
         skull = BitmapFactory.decodeResource(ctx.getResources(),R.drawable.skull);
         grimreaper = BitmapFactory.decodeResource(ctx.getResources(),R.drawable.grimreaper);
+        goalflag = BitmapFactory.decodeResource(ctx.getResources(),R.drawable.goalflag);
     }
 
     boolean scrollAnimate = false;
@@ -134,6 +137,7 @@ public class Progressor {
         int lvl = Math.max(currentLevel-1,1);
         for (int i = 0; i<5;i++) {
             int curr = i+lvl;
+            LevelDescriptor ld = getLevel(curr);
             Difficulty difficulty = surfer.getDifficulty(curr);
             int x = pStartOffsetX+width/4*(i+1)-scrollFactor;
             c.drawCircle(x,centre,ballRadius,(curr == mStoplevel)?pT:pB);
@@ -147,6 +151,10 @@ public class Progressor {
         c.restore();
     }
 
+    private LevelDescriptor getLevel(int curr) {
+        return null;
+    }
+
 
     private Paint drawGradient() {
         Bitmap b = Bitmap.createBitmap(width, height, Bitmap.Config.ALPHA_8);
@@ -154,7 +162,7 @@ public class Progressor {
 
         paint.setColor(Color.BLACK);
 
-        Shader mShader = new LinearGradient(0, 0, 0, height, new int[] {
+        Shader mShader = new SweepGradient(0, 0, 0, height, new int[] {
                 Color.BLACK,Color.GRAY, Color.BLACK },
                 null, Shader.TileMode.REPEAT);  // CLAMP MIRROR REPEAT
 
