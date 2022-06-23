@@ -14,7 +14,6 @@ import android.os.Handler;
 import android.os.Looper;
 
 import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
 
 public class Progressor {
 
@@ -29,20 +28,21 @@ public class Progressor {
     Paint pL = new Paint();
     Paint pT = new Paint();
     //frame
-    Paint pF = new Paint();
-    Paint pBlackText = new Paint(Color.BLACK);
-    Paint pWhiteText = new Paint(Color.WHITE);
+    Paint pFrameGold = new Paint();
+    Paint pFrameSilver = new Paint();
+    Paint pBlackText = new Paint();
+    Paint pWhiteText = new Paint();
 
     int offset,width,height,centre;
     int pStartOffsetX, ballRadius, skullSize;
-    int ballSpacing;
     int boardMargin=5;
     int currentLevel=1;
     int scrollFactor=0;int textSize;
+    float pointRectBorderW;
     final Handler animationHandler = new Handler(Looper.myLooper());
     final SurfaceHolderCallback surfer;
-    final Rect diffRect,goalRect;
-    final Rect[] starRect = new Rect[3];
+    final Rect diffRect,goalRect,starRect;
+    RectF rectouter, rectinner;
     final Bitmap skull,grimreaper,goalflag,knight,golden_knight;
     private Paint gradientP;
 
@@ -51,16 +51,16 @@ public class Progressor {
         surfer=_surfer;
         offset=_offset;
         width=_width; height = _height;
-        ballRadius = height/5;
+        ballRadius = height/4;
+        int pointRectW = ballRadius * 2 + ballRadius / 2, pointRectH = ballRadius;
         skullSize = ballRadius*2;
         centre=height/2-boardMargin;
-        ballSpacing = ballRadius*5;
-        pStartOffsetX = width/4;
+        pStartOffsetX = width/4-pointRectW/2;
         pR.setStyle(Paint.Style.STROKE);
         pR.setColor(Color.WHITE);
-        pF.setStyle(Paint.Style.FILL);
-        pF.setColor(Color.parseColor("#C0C0C0"));
-        pF.setStrokeWidth(5);
+        pFrameGold.setStyle(Paint.Style.FILL);
+        pFrameGold.setColor(Color.parseColor("#C0C0C0"));
+        pFrameGold.setStrokeWidth(5);
         pB.setStyle(Paint.Style.FILL);
         pB.setColor(Color.WHITE);
         pT.setStyle(Paint.Style.FILL);
@@ -78,17 +78,34 @@ public class Progressor {
         pBlackText.setAntiAlias(true);
         pBlackText.setFilterBitmap(true);
         pBlackText.setDither(true);
-        Shader mShader = new LinearGradient(0,
+
+        pointRectBorderW = ballRadius * .10f;
+        rectouter = new RectF(0, 0, pointRectW, pointRectH);
+        rectinner = new RectF(pointRectBorderW, pointRectBorderW, pointRectW - pointRectBorderW, pointRectH - pointRectBorderW*(pointRectW/pointRectH));
+
+        Shader goldShade = new LinearGradient(0,
                 0,
                 0,
-                height,
+                rectouter.height(),
                 new int[] {
-                        ContextCompat.getColor(ctx,R.color.dk_gold),
                         ContextCompat.getColor(ctx,R.color.lt_gold),
+                        ContextCompat.getColor(ctx,R.color.dk_gold),
                          },
                 null,
                 Shader.TileMode.REPEAT);
-        pF.setShader(mShader);
+        pFrameGold.setShader(goldShade);
+        Shader silverShade = new LinearGradient(0,
+                0,
+                0,
+                rectouter.height(),
+                new int[] {
+                        ContextCompat.getColor(ctx,R.color.dk_silver),
+                        ContextCompat.getColor(ctx,R.color.lt_silver),
+                },
+                null,
+                Shader.TileMode.REPEAT);
+        pFrameGold.setShader(goldShade);
+        pFrameSilver.setShader(silverShade);
 
         pWhiteText.setColor(Color.WHITE);
         pWhiteText.setTextAlign(Paint.Align.CENTER);
@@ -99,14 +116,15 @@ public class Progressor {
         pWhiteText.setDither(true);
         diffRect = new Rect(0,0,skullSize,skullSize);
         goalRect = new Rect(0,0,skullSize,skullSize);
-        starRect[0] = new Rect(0,0,skullSize/2,skullSize/2);
-        starRect[1] = new Rect(0,0,skullSize/2,skullSize/2);
-        starRect[2] = new Rect(0,0,skullSize/2,skullSize/2);
+        starRect = new Rect(0,0,skullSize/3,skullSize/3);
         skull = BitmapFactory.decodeResource(ctx.getResources(),R.drawable.skull);
         grimreaper = BitmapFactory.decodeResource(ctx.getResources(),R.drawable.grimreaper);
         goalflag = BitmapFactory.decodeResource(ctx.getResources(),R.drawable.goalflag);
         knight = BitmapFactory.decodeResource(ctx.getResources(),R.drawable.fancy_knight);
         golden_knight = BitmapFactory.decodeResource(ctx.getResources(),R.drawable.golden_knight);
+
+
+
     }
 
     boolean scrollAnimate = false;
@@ -161,33 +179,36 @@ public class Progressor {
         surfer.surfaceChanged();
     }
 
+    private void drawLevel(Canvas c, int level,int stars, int left, int top) {
 
-    private void drawLevel(Canvas c, int stars) {
-        RectF rectouter, rectinner;
-        int rW = ballRadius * 2 + ballRadius / 2, rH = ballRadius * 2;
-        float th = ballRadius * .1f;
-        rectouter = new RectF(0, 0, rW, rH);
-        rectinner = new RectF(th, th, rW - th, rH - th);
-        c.drawDoubleRoundRect(rectouter, 25, 25, rectinner, 10, 10, pF);
+        rectouter.offsetTo(left,top);
+        rectinner.offsetTo(left+boardMargin,top+boardMargin);
+        c.drawDoubleRoundRect(rectouter, 10, 10, rectinner, 10, 10, pFrameGold);
         switch (stars) {
             case 1:
-                starRect[1].offsetTo(rW / 2 - starRect[0].width() / 2, 20);
-                c.drawBitmap(left,top,p);
+                starRect.offsetTo(left+starRect.width() / 2, top-starRect.height()/2 );
+                c.drawBitmap(knight,null,starRect,pR);
+                break;
+            case 2:
+
+                break;
+
+            case 3:
+                break;
+
         }
-        starRect[1].offsetTo(rW / 2 - starRect[0].width() / 2, 20);
-        starRect[0].offsetTo(rW / 2 - rW / 4 - starRect[0].width() / 2, 20);
-        starRect[2].offsetTo(rW / 2 + rW / 4 - starRect[0].width() / 2, 20);
-        c.drawBitmap(knight, null, starRect[0], pR);
-        c.drawBitmap(golden_knight, null, starRect[1], pR);
-        c.drawBitmap(knight, null, starRect[2], pR);
-        c.drawText("12348", ballRadius, ballRadius * 2 - 24, pWhiteText);
+        //starRect[1].offsetTo(rW / 2 - starRect[0].width() / 2, 20);
+        //starRect[0].offsetTo(rW / 2 - rW / 4 - starRect[0].width() / 2, 20);
+        //starRect[2].offsetTo(rW / 2 + rW / 4 - starRect[0].width() / 2, 20);
+
+        c.drawText(level+"", left+rectouter.width()/2, top+rectouter.height()-textSize/2-pointRectBorderW, pWhiteText);
     }
     public void onDraw(Canvas c) {
 
         c.save();
         c.translate(0,offset);
         c.drawRect(0,0,width,height,gradientP);
-        drawLevel(c,3);
+
 
         //c.drawLine(0,centre,width,centre,pL);
         int lvl = Math.max(currentLevel-1,1);
@@ -196,14 +217,15 @@ public class Progressor {
             LevelDescriptor ld = getLevel(curr);
             Difficulty difficulty = surfer.getDifficulty(curr);
             int x = pStartOffsetX+width/4*(i+1)-scrollFactor;
-            c.drawCircle(x,centre,ballRadius,(curr == mStoplevel)?pT:pB);
-            c.drawText(curr+"",pStartOffsetX+width/4*(i+1)-scrollFactor,centre+textSize/2, pBlackText);
+            drawLevel(c,curr,1,x,centre-(int)rectouter.height()/2);
+            //c.drawCircle(x,centre,ballRadius,(curr == mStoplevel)?pT:pB);
+            //c.drawText(curr+"",pStartOffsetX+width/4*(i+1)-scrollFactor,centre+textSize/2, pBlackText);
             if(difficulty!=Difficulty.normal) {
                 diffRect.offsetTo(x-skullSize/2,centre-3*ballRadius-10);
                 c.drawBitmap(difficulty==Difficulty.nightmare?skull:grimreaper, null, diffRect, pR);
             }
         }
-        c.drawRect(width/2-ballRadius,centre-ballRadius,width/2+ballRadius,centre+ballRadius,pL);
+        //c.drawRect(width/2-ballRadius,centre-ballRadius,width/2+ballRadius,centre+ballRadius,pL);
         c.restore();
     }
 

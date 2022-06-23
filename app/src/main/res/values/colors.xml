@@ -15,4 +15,9 @@
     <color name="black_overlay">#66000000</color>
     <color name="dk_gold">#B8860B</color>
     <color name="lt_gold">#FFB302</color>
+    <color name="dk_silver">#71706E</color>
+    <color name="lt_silver">#D8D8D8</color>
+
+
+
 </resources>

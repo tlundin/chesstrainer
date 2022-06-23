@@ -22,18 +22,30 @@
         android:layout_weight="1"
         android:textStyle="bold"
         android:text="TEST"
+        android:visibility="gone"
         android:textAlignment="center"
         android:textColor="@color/white"
         android:background="@color/dk_gray"
         android:textSize="20sp" />
     <ImageButton
-        android:id="@+id/retry"
+        android:id="@+id/endB"
         android:layout_weight="1"
         android:layout_width="64dp"
         android:layout_height="64dp"
+        android:scaleType="fitCenter"
         android:layout_gravity="center"
         android:visibility="gone"
-        android:background="@drawable/retry"/>
+        android:background="@drawable/happy"/>
+    <ImageButton
+        android:id="@+id/startB"
+        android:layout_weight="1"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:scaleType="fitCenter"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="200dp"
+        android:visibility="gone"
+        android:background="@drawable/off_button"/>
     <LinearLayout
         android:id="@+id/bbar"
         android:layout_weight="1"
@@ -44,6 +56,7 @@
         <Button
             android:id="@+id/flip"
             android:text="flip"
+            android:visibility="gone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             style="?android:attr/buttonBarButtonStyle">
@@ -51,6 +64,7 @@
         <Button
             android:id="@+id/reset"
             android:text="reset"
+            android:visibility="gone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             style="?android:attr/buttonBarButtonStyle">
@@ -58,6 +72,7 @@
         <Button
             android:id="@+id/test"
             android:text="test"
+            android:visibility="gone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             style="?android:attr/buttonBarButtonStyle">

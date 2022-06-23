@@ -4,6 +4,8 @@ package com.teraime.chesstrainer;
 import static com.teraime.chesstrainer.ChessConstants.INITIAL_BOARD;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Point;
 import android.os.Handler;
@@ -30,22 +32,23 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
     private final Handler shakeHandler;
     private final Runnable repeatShake;
     private Board board;
-    private Progressor progressor;
+    private ScoreKeeper progressor;
     private SurfaceHolder mSurfaceHolder = null;
     private boolean moveIsActive = false;
     private MySQLiteHelper db;
     private ChessPosition boardAfterMove;
     private int boardOffset,progressorOffset,progressorHeight;
     TextView scoreT;
-    ImageButton retryB;
+    ImageButton endButton;
+    Bitmap happy,sad;
     private int score = 0;
 
-    public GameView(Context context, MySQLiteHelper db, TextView scoreT, ImageButton retry) {
+    public GameView(Context context, MySQLiteHelper db, TextView scoreT, ImageButton endB) {
 
         this.context = context;
         this.db = db;
         this.scoreT = scoreT;
-        retryB=retry;
+        this.endButton = endB;
         this.shake = AnimationUtils.loadAnimation(context, R.anim.shake);
         shakeHandler = new Handler();
         final boolean[] first = {true};
@@ -54,7 +57,7 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
             public void run() {
                 try {
                     if (!first[0])
-                        retryB.startAnimation(shake);
+                        endB.startAnimation(shake);
                     else
                         first[0] = false;
                 } finally {
@@ -64,6 +67,8 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
                 }
             }
         };
+        happy = BitmapFactory.decodeResource(context.getResources(), R.drawable.happy);
+        sad = BitmapFactory.decodeResource(context.getResources(),R.drawable.sad);
 
     }
     String TAG = "beboop";
@@ -78,12 +83,12 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
         boardOffset = canvasH/3;
         //Board is screenw wide. Let progressor be about two squares wide.
         progressorHeight = canvasW/3;
-        progressorOffset = boardOffset-progressorHeight;
+        progressorOffset = boardOffset-progressorHeight-canvasW/12;
         board = new Board(context,Board.ScaleOptions.MAX, Board.StyleOptions.plain, Board.StyleOptions.plain,canvasW, boardOffset, this);
         ChessPosition pos = new ChessPosition(INITIAL_BOARD);//new ChessPosition(GameState.convertFenToBoard(ChessConstants.FEN_STARTING_POSITION));
         pos.print();
         board.setupPosition(pos);
-        progressor = new Progressor(context,progressorOffset,canvasW,progressorHeight,this);
+        progressor = new ScoreKeeper(context,progressorOffset,canvasW,progressorHeight,this);
         surfaceChanged();
 
     }
@@ -109,36 +114,68 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
     }
 
     public void onFail() {
-        retryB.setVisibility(View.VISIBLE);
-        repeatShake.run();
-        retryB.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                shakeHandler.removeCallbacks(repeatShake);
-                retryB.setVisibility(View.GONE);
-                onTestClickFail();
-            }
-        });
-
-
+        currFill = (currFill-10);
+        if (currFill < 0) {
+            endButton.setImageBitmap(sad);
+            endButton.setVisibility(View.VISIBLE);
+            repeatShake.run();
+            endButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    shakeHandler.removeCallbacks(repeatShake);
+                    endButton.setVisibility(View.GONE);
+                    currFill = 0;
+                    onTestClickFail();
+                }
+            });
+        } else {
+            progressor.setFillValue(currFill);
+            surfaceChanged();
+            onTestClickFail();
+        }
     }
 
     int[] moveSpeedA = new int[]{1,2,4,8,10,16,20,25};
     int moveSpeedIndex = 0;
     int currentMoveSpeed = 1;
+    int currFill = 0;
 
     public void nextLevel() {
         try {
             scoreT.setText("" + score++);
             Thread.sleep(500);
             currentMoveSpeed = moveSpeedA[moveSpeedIndex];
-            progressor.scrollAnimate(currentMoveSpeed, new AnimationDoneListener() {
+            /*progressor.scrollAnimate(currentMoveSpeed, new AnimationDoneListener() {
                 @Override
                 public void onAnimationDone() {
 
                     onTestClickSuccess();
                 }
             });
+
+             */
+            currFill = (currFill+10);
+
+            progressor.setFillValue(currFill);
+            this.surfaceChanged();
+            if (currFill == 100) {
+
+                endButton.setImageBitmap(happy);
+                endButton.setVisibility(View.VISIBLE);
+                repeatShake.run();
+                endButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        shakeHandler.removeCallbacks(repeatShake);
+                        endButton.setVisibility(View.GONE);
+                        currFill = 0;
+                        surfaceChanged();
+                        onTestClickSuccess();
+                    }
+                });
+            }
+
+            onTestClickSuccess();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -254,7 +291,7 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
         //board.move(new BasicMove(new Cord(4,1),new Cord(4,2)));
         //File dbP = context.getDatabasePath("chess.db");
         //Log.d("db","FILE "+dbP.getAbsolutePath());
-        Types.TacticProblem problem = mTacticProblems.get(progressor.currentLevel+currentMoveSpeed);
+        Types.TacticProblem problem = mTacticProblems.get(currentMoveSpeed);
         if (!moveIsActive) {
             currentMin=lastmin;
             lastmin = problem.rating;

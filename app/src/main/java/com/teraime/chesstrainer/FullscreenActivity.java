@@ -100,16 +100,12 @@ public class FullscreenActivity extends AppCompatActivity {
         Button flipButton = binding.flip;
         Button testButton = binding.test;
         Button resetButton = binding.reset;
-        ImageButton retry = binding.retry;
+        ImageButton endB = binding.endB;
+
         scoreT = binding.score;
-        Log.d("zurf","gets");
-
         SurfaceView sf = (SurfaceView)mContentView;
+        sf.getHolder().addCallback(new GameCoreographer(this,binding));
 
-        game = new GameView(this,createDB(),scoreT,retry);
-        sf.getHolder().addCallback(game);
-        sf.setOnClickListener(game);
-        sf.setOnTouchListener(game);
         flipButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View _view) {
