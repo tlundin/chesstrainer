@@ -3,6 +3,8 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/terje/dev/Chesstrainer/app/src/main/res/drawable/buttonfade.xml" value="0.1685" />
+        <entry key="..\:/Users/terje/dev/Chesstrainer/app/src/main/res/drawable/easy_states.xml" value="0.244" />
         <entry key="..\:/Users/terje/dev/Chesstrainer/app/src/main/res/drawable/shake.xml" value="0.189" />
         <entry key="..\:/Users/terje/dev/Chesstrainer/app/src/main/res/layout/activity_fullscreen.xml" value="0.35833333333333334" />
         <entry key="..\:/Users/terje/dev/chesstrainer/app/src/main/res/layout/activity_fullscreen.xml" value="0.2" />

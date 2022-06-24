@@ -17,7 +17,6 @@ import android.util.Log;
 
 public class Board
 {
-    BoxOfChessMen set = new BoxOfChessMen();
     final StyleOptions pieceStyle,boardStyle;
     final static float border_thickness_as_percentage = .10f;
     final Rect boardRect,gridRect,L_Edge,R_Edge,B_Edge,T_Edge;
