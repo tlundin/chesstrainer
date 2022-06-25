@@ -56,7 +56,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:adjustViewBounds="true"
-        android:layout_gravity="left|center_vertical"
+        android:layout_gravity="start|bottom"
+        android:layout_marginBottom="200dp"
         android:visibility="gone"
         android:background="@drawable/easy_states"/>
     <ImageButton
@@ -66,7 +67,8 @@
         android:layout_height="wrap_content"
         android:adjustViewBounds="true"
         android:layout_marginTop="25dp"
-        android:layout_gravity="center"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="200dp"
         android:visibility="gone"
         android:background="@drawable/diff_normal"/>
     <ImageButton
@@ -77,9 +79,25 @@
         android:adjustViewBounds="true"
         android:layout_marginTop="25dp"
         android:layout_marginRight="25dp"
-        android:layout_gravity="right|center_vertical"
+        android:layout_gravity="end|bottom"
+        android:layout_marginBottom="200dp"
         android:visibility="gone"
         android:background="@drawable/diff_hard"/>
+    <TextView
+        android:id="@+id/easyT"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/black"
+        android:layout_weight="1"
+        android:layout_gravity="center"
+        android:layout_marginTop="50dp"
+        android:textStyle="bold"
+        android:text="EASY"
+        android:visibility="gone"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:background="@color/dk_gray"
+        android:textSize="20sp" />
 
     <LinearLayout
         android:id="@+id/bbar"

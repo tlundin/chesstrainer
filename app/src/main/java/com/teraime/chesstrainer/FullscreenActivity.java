@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowInsets;
@@ -104,7 +105,11 @@ public class FullscreenActivity extends AppCompatActivity {
 
         scoreT = binding.score;
         SurfaceView sf = (SurfaceView)mContentView;
-        sf.getHolder().addCallback(new GameCoreographer(this,binding));
+        SurfaceHolder surfaceHolder = sf.getHolder();
+        GameView gv = new GameView(this,createDB(),scoreT,endB);
+        surfaceHolder.addCallback(gv);
+        surfaceHolder.addCallback(new GameCoreographer(this,binding,gv));
+
 
         flipButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -140,6 +145,7 @@ public class FullscreenActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
+
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.hide();
@@ -181,8 +187,12 @@ public class FullscreenActivity extends AppCompatActivity {
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
     }
 
+    MySQLiteHelper myDBH;
+    public MySQLiteHelper getDB() {
+        return myDBH;
+    }
     private MySQLiteHelper createDB() {
-        MySQLiteHelper myDBH = new MySQLiteHelper(this.getApplicationContext());
+        myDBH = new MySQLiteHelper(this.getApplicationContext());
         try {
             myDBH.createDataBase();
         } catch (IOException e) {

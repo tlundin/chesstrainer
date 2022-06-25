@@ -21,7 +21,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 
 import java.util.List;
-import java.util.Random;
 
 public class GameView implements SurfaceHolder.Callback, View.OnClickListener, View.OnTouchListener,SurfaceHolderCallback {
 
@@ -37,7 +36,7 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
     private boolean moveIsActive = false;
     private MySQLiteHelper db;
     private ChessPosition boardAfterMove;
-    private int boardOffset,progressorOffset,progressorHeight;
+    private int boardOffset, progressorOffsetY,progressorHeight;
     TextView scoreT;
     ImageButton endButton;
     Bitmap happy,sad;
@@ -83,14 +82,18 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
         boardOffset = canvasH/3;
         //Board is screenw wide. Let progressor be about two squares wide.
         progressorHeight = canvasW/3;
-        progressorOffset = boardOffset-progressorHeight-canvasW/12;
+        progressorOffsetY = boardOffset-progressorHeight-canvasW/12;
         board = new Board(context,Board.ScaleOptions.MAX, Board.StyleOptions.plain, Board.StyleOptions.plain,canvasW, boardOffset, this);
         ChessPosition pos = new ChessPosition(INITIAL_BOARD);//new ChessPosition(GameState.convertFenToBoard(ChessConstants.FEN_STARTING_POSITION));
         pos.print();
         board.setupPosition(pos);
-        progressor = new ScoreKeeper(context,progressorOffset,canvasW,progressorHeight,this);
-        surfaceChanged();
+        progressor = new ScoreKeeper(context, progressorOffsetY,canvasW,progressorHeight,this);
 
+
+    }
+
+    public int getOrbY() {
+        return progressorOffsetY;
     }
 
     @Override
