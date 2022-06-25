@@ -14,7 +14,7 @@
         android:theme="@style/Theme.Chesstrainer"
         tools:targetApi="31">
         <activity
-            android:name=".FullscreenActivity"
+            android:name=".OrbChessActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true"
             android:label="@string/app_name"

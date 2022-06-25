@@ -31,7 +31,8 @@ public class Board
 
     final Bitmap[] pieceBox;
     final Boolean hasEdge;
-    final Rect[] squares,pieceSquares;
+    final Square[] squares;
+    final Rect[] pieceSquares;
     final int border_thickness,gridSize;
     private ChessPosition mPosition=null;
     private boolean whiteOnTop = false;
@@ -79,7 +80,7 @@ public class Board
             break;
         }
         gridRect = new Rect(border_thickness,border_thickness,_size-border_thickness,_size-border_thickness);
-        squares = new Rect[64]; pieceSquares = new Rect[64];
+        squares = new Square[64]; pieceSquares = new Rect[64];
         w_square = BitmapFactory.decodeResource(context.getResources(),R.drawable.white_square_wood);
         b_square = BitmapFactory.decodeResource(context.getResources(),R.drawable.dark_square_wood);
         int top = 0;int left=0;int bottom=0;int right=0;
@@ -87,13 +88,16 @@ public class Board
         int square_size = getSquareSize();
         dragRect = new Rect(0,0,(int)(square_size*GameView.DragRectSize),(int)(square_size*GameView.DragRectSize));
         moveRect = new Rect(0,0,square_size,square_size);
+        boolean isWhite=false;
         for(int row=0; row<8 ; row++) {
+            isWhite = !isWhite;
             for (int column=0; column<8 ; column++) {
                 left   = border_thickness+column*square_size;
                 top    = border_thickness+row*square_size;
                 right  = left+square_size;
                 bottom = top+square_size;
-                squares[i] = new Rect(left,top,right,bottom);
+                squares[i] = new Square(left,top,right,bottom,isWhite);
+                isWhite = !isWhite;
                 pieceSquares[i++] = new Rect(left,top,right,bottom);
             }
         }
@@ -324,6 +328,10 @@ public class Board
         surfer.surfaceChanged();
     }
 
+    public Square[] getSquares() {
+        return squares;
+    }
+
     public void onDraw(Canvas c) {
         c.save();
         c.translate(0,boardOffset);
@@ -347,7 +355,7 @@ public class Board
                     //square = (square == w_square) ? b_square : w_square;
                     //c.drawBitmap(square, null, squares[i], p);
                     worb = (column%2+row%2)%2==0 ? wh:sg;
-                    c.drawRect(squares[i],worb);
+                    c.drawRect(squares[i].mRect,worb);
 
                     int flip_row = whiteOnTop ? 7 - row : row;
                     int flip_column = whiteOnTop ? 7 - column : column;

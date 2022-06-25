@@ -22,6 +22,7 @@ import android.view.SurfaceHolder;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -41,7 +42,7 @@ public class GameCoreographer implements SurfaceHolder.Callback {
     private final Paint p2 = new Paint();Paint p = new Paint();
     AnimationDrawable frameAnimation;
     SurfaceHolder surfaceHolder;
-    Bitmap newbieBmp, clubBmp, masterBmp;
+    Bitmap newbieBmp, clubBmp, masterBmp, logo;
     final Handler handler;
     Rect bg,orbR;
     Shader mShader;
@@ -53,6 +54,7 @@ public class GameCoreographer implements SurfaceHolder.Callback {
     private int textSize = 50;
     private GameView gv;
     private int orbY;
+    private ImageView easyTxt,normalTxt,hardTxt;
 
 
     public GameCoreographer(Context context, ActivityFullscreenBinding binding,GameView gv) {
@@ -63,7 +65,10 @@ public class GameCoreographer implements SurfaceHolder.Callback {
         off = BitmapFactory.decodeResource(context.getResources(),R.drawable.off_button);
         pressed= BitmapFactory.decodeResource(context.getResources(),R.drawable.green_pressed);
         on = BitmapFactory.decodeResource(context.getResources(),R.drawable.green4_button);
-
+        logo = BitmapFactory.decodeResource(context.getResources(),R.drawable.logo);
+        easyTxt = binding.easytxt;
+        normalTxt = binding.normaltxt;
+        hardTxt = binding.hardtxt;
         //startButton.setImageBitmap(off);
         easyDiffB = binding.diffEasyButton;
         normalDiffB = binding.diffNormalButton;
@@ -127,6 +132,7 @@ public class GameCoreographer implements SurfaceHolder.Callback {
         hardDiffB.setVisibility(View.VISIBLE);
 
 
+
         easyDiffB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -181,12 +187,18 @@ public class GameCoreographer implements SurfaceHolder.Callback {
                         if (selected == null) {
                             newPlayer = true;
                             normalDiffB.callOnClick();
+                            easyTxt.setVisibility(View.VISIBLE);
+                            normalTxt.setVisibility(View.VISIBLE);
+                            hardTxt.setVisibility(View.VISIBLE);
                             invalidate();
                         } else {
                             hardDiffB.setVisibility(View.GONE);
                             easyDiffB.setVisibility(View.GONE);
                             normalDiffB.setVisibility(View.GONE);
                             startButton.setVisibility(View.GONE);
+                            easyTxt.setVisibility(View.GONE);
+                            normalTxt.setVisibility(View.GONE);
+                            hardTxt.setVisibility(View.GONE);
                             shrinking=true;
                             orbY = gv.getOrbY();
                             shrinkOrb();
@@ -284,10 +296,8 @@ public class GameCoreographer implements SurfaceHolder.Callback {
             orbR.offsetTo((c.getWidth()-orbR.width())/2,orbC<orbY?orbC+=2:orbY);
         } else {
             orbR.offsetTo(0, 0);
-            if (textSize > 5) {
-                p2.setTextSize(textSize);
-                c.drawText("The Grandmaster's Orb", c.getWidth() / 2, c.getWidth() / 2 - 150 / 2, p2);
-            }
+            c.drawBitmap(logo, c.getWidth() / 2-logo.getWidth()/2, c.getWidth() / 2 -logo.getHeight()/2, p2);
+
 
 
         }

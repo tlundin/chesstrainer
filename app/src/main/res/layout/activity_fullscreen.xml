@@ -5,23 +5,19 @@
     android:layout_height="match_parent"
     android:background="?attr/fullscreenBackgroundColor"
     android:theme="@style/ThemeOverlay.Chesstrainer.FullscreenContainer"
-    tools:context=".FullscreenActivity"
+    tools:context=".OrbChessActivity"
     >
 
 
 
-        <SurfaceView
-            android:id="@+id/chess_bg"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="0"
-            >
-        </SurfaceView>
+    <SurfaceView
+        android:id="@+id/chess_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
     <TextView
         android:id="@+id/score"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:textStyle="bold"
         android:text="TEST"
         android:visibility="gone"
@@ -31,7 +27,6 @@
         android:textSize="20sp" />
     <ImageButton
         android:id="@+id/endB"
-        android:layout_weight="1"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:scaleType="fitCenter"
@@ -40,7 +35,6 @@
         android:background="@drawable/happy"/>
     <ImageButton
         android:id="@+id/startB"
-        android:layout_weight="1"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:scaleType="fitCenter"
@@ -48,48 +42,85 @@
         android:layout_marginBottom="100dp"
         android:visibility="gone"
         android:background="@drawable/off_button"/>
-    <ImageButton
-        android:id="@+id/diffEasyButton"
-        android:layout_weight="1"
-        android:layout_marginTop="25dp"
-        android:layout_marginLeft="25dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
-        android:layout_gravity="start|bottom"
-        android:layout_marginBottom="200dp"
-        android:visibility="gone"
-        android:background="@drawable/easy_states"/>
-    <ImageButton
-        android:id="@+id/diffNormalButton"
-        android:layout_weight="1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
-        android:layout_marginTop="25dp"
-        android:layout_gravity="center_horizontal|bottom"
-        android:layout_marginBottom="200dp"
-        android:visibility="gone"
-        android:background="@drawable/diff_normal"/>
-    <ImageButton
-        android:id="@+id/diffHardButton"
-        android:layout_weight="1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
-        android:layout_marginTop="25dp"
-        android:layout_marginRight="25dp"
-        android:layout_gravity="end|bottom"
-        android:layout_marginBottom="200dp"
-        android:visibility="gone"
-        android:background="@drawable/diff_hard"/>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <ImageView
+            android:id="@+id/easytxt"
+            android:layout_marginTop="25dp"
+            android:layout_marginLeft="30dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="200dp"
+            android:visibility="invisible"
+            android:background="@drawable/easy">
+        </ImageView>
+        <ImageButton
+            android:id="@+id/diffEasyButton"
+            android:layout_marginTop="25dp"
+            android:layout_marginLeft="25dp"
+            android:layout_marginBottom="25dp"
+            android:layout_alignBottom="@id/easytxt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:visibility="gone"
+            android:background="@drawable/easy_states"/>
+        <ImageView
+            android:id="@+id/normaltxt"
+            android:layout_marginTop="25dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_alignBottom="@id/easytxt"
+            android:visibility="invisible"
+            android:background="@drawable/normal">
+        </ImageView>
+        <ImageButton
+            android:id="@+id/diffNormalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:layout_marginTop="25dp"
+            android:layout_marginBottom="25dp"
+            android:layout_centerHorizontal="true"
+            android:layout_alignBottom="@id/easytxt"
+            android:visibility="gone"
+            android:background="@drawable/diff_normal"/>
+        <ImageView
+            android:id="@+id/hardtxt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="25dp"
+            android:layout_marginRight="25dp"
+            android:layout_alignParentRight="true"
+            android:layout_alignBottom="@id/easytxt"
+            android:visibility="invisible"
+            android:background="@drawable/hard">
+        </ImageView>
+        <ImageButton
+            android:id="@+id/diffHardButton"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:layout_marginTop="25dp"
+            android:layout_marginEnd="30dp"
+            android:layout_marginBottom="25dp"
+            android:layout_alignParentRight="true"
+            android:layout_alignBottom="@id/hardtxt"
+            android:visibility="gone"
+            android:background="@drawable/diff_hard"/>
+    </RelativeLayout>
     <TextView
         android:id="@+id/easyT"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:backgroundTint="@color/black"
         android:layout_weight="1"
-        android:layout_gravity="center"
+        android:layout_gravity="bottom"
         android:layout_marginTop="50dp"
         android:textStyle="bold"
         android:text="EASY"
