@@ -2,9 +2,21 @@ package com.teraime.chesstrainer;
 
 import android.graphics.Canvas;
 
-public abstract class DrawableGameWidget {
+class DrawableGameWidget {
 
-        public int offset = 0;
-        public abstract void draw(Canvas c);
+        Widget mWidget;
+        int mOffset = 0;
 
+        DrawableGameWidget(GameWidget widget, int offset) {
+                mWidget = widget;
+                mOffset = offset;
+        }
+
+        public void draw(Canvas c) {
+                mWidget.draw(c);
+        }
+
+        public boolean stepAnimate() {
+                mWidget.stepAnimate();
+        }
 }

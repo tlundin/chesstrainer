@@ -15,7 +15,7 @@ import android.os.Looper;
 import android.util.Log;
 
 
-public class Board extends DrawableGameWidget
+public class Board implements GameWidget
 {
     final StyleOptions pieceStyle,boardStyle;
     final static float border_thickness_as_percentage = .10f;

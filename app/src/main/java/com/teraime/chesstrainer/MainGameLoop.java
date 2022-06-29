@@ -32,8 +32,10 @@ public class MainGameLoop {
                         c = gc.sh.lockCanvas();
                         for (DrawableGameWidget gw : gameWidgets) {
                             c.save();
-                            c.translate(0, );
+                            c.translate(0,gw.getOffset());
+                            gw.animate(c);
                             gw.draw(c);
+
                         }
                         gc.sh.unlockCanvasAndPost(c);
                     }
