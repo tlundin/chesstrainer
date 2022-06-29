@@ -47,7 +47,7 @@ public class GameCoreographer implements SurfaceHolder.Callback {
     Rect bg,orbR;
     Shader mShader;
     Bitmap on,off,pressed;
-    private ThreadPoolExecutor mPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(5);
+
     ArrayList<View> viewsToFadeIn;
     private int shrinkTarget=0,shrinkTargetX;
     private int shrinkX;
@@ -87,12 +87,8 @@ public class GameCoreographer implements SurfaceHolder.Callback {
 
         startButton.setVisibility(View.VISIBLE);
 
-        mPool.submit(new Runnable() {
-            @Override
-            public void run() {
+
                 init();
-            }
-        });
 
         viewsToFadeIn = new ArrayList<View>();
         viewsToFadeIn.add(easyDiffB);
@@ -271,7 +267,7 @@ public class GameCoreographer implements SurfaceHolder.Callback {
     boolean shrinking = false;
 
     private void shrinkOrb() {
-        mPool.submit(new Runnable() {
+        GameContext.tp.submit(new Runnable() {
             @Override
             public void run() {
                 int shrinkFactor = 0;

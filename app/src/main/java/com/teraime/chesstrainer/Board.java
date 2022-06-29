@@ -15,7 +15,7 @@ import android.os.Looper;
 import android.util.Log;
 
 
-public class Board
+public class Board extends DrawableGameWidget
 {
     final StyleOptions pieceStyle,boardStyle;
     final static float border_thickness_as_percentage = .10f;
@@ -45,6 +45,9 @@ public class Board
     private Cord okLocation;
     private boolean dragActive = false, moveActive = false;
 
+    public Board() {
+
+    }
     public Board(Context context, ScaleOptions scaleOption, StyleOptions boardStyle, StyleOptions pieceStyle, int size_with_borders, int bo, SurfaceHolderCallback _surfer) {
         int _size = scale(size_with_borders,scaleOption);
         this.boardOffset = bo;
@@ -230,6 +233,13 @@ public class Board
         whiteOnTop=false;
     }
 
+    @Override
+    public void setup(GameContext gc, int offset) {
+
+    }
+
+
+
 
     public enum StyleOptions {
         plain,
@@ -331,6 +341,37 @@ public class Board
     public Square[] getSquares() {
         return squares;
     }
+
+    @Override
+    public void draw(Canvas c) {
+        c.drawColor(Color.BLACK);
+        if (hasEdge) {
+            c.drawBitmap(edgeHorisontal, null, T_Edge, p);
+            c.drawBitmap(edgeHorisontal, null, B_Edge, p);
+            c.drawBitmap(edgeVertical, null, L_Edge, p);
+            c.drawBitmap(edgeVertical, null, R_Edge, p);
+        }
+        int i = 0;
+        Paint worb;
+        for (int row = 0; row < 8; row++) {
+            //square = (square == w_square) ? b_square : w_square;
+            for (int column = 0; column < 8; column++) {
+                //square = (square == w_square) ? b_square : w_square;
+                //c.drawBitmap(square, null, squares[i], p);
+                worb = (column%2+row%2)%2==0 ? wh:sg;
+                c.drawRect(squares[i].mRect,worb);
+
+                int flip_row = whiteOnTop ? 7 - row : row;
+                int flip_column = whiteOnTop ? 7 - column : column;
+                //Don't draw The moving piece
+
+                if (!mPosition.isEmpty(flip_column, flip_row))
+                        c.drawBitmap(pieceBox[mPosition.get(flip_column, flip_row)], null, pieceSquares[i], p);
+                i++;
+            }
+        }
+    }
+
 
     public void onDraw(Canvas c) {
         c.save();

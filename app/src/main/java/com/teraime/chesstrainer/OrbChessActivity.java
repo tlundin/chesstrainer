@@ -22,6 +22,8 @@ import android.widget.TextView;
 import com.teraime.chesstrainer.databinding.ActivityFullscreenBinding;
 
 import java.io.IOException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -45,6 +47,10 @@ public class OrbChessActivity extends AppCompatActivity {
      * and a change of the status and navigation bar.
      */
     private static final int UI_ANIMATION_DELAY = 300;
+
+    //context for the app. singleton.
+    GameContext gc = new GameContext();
+    MainGameLoop gameLoop = new MainGameLoop(gc);
     private final Handler mHideHandler = new Handler(Looper.myLooper());
     private View mContentView;
     private final Runnable mHidePart2Runnable = new Runnable() {
