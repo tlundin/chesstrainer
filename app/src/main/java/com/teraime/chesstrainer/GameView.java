@@ -99,10 +99,6 @@ public class GameView implements SceneContext,SurfaceHolder.Callback, View.OnCli
         return ret;
     }
 
-    public int getOrbY() {
-        return progressorOffsetY;
-    }
-
     @Override
     public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int i1, int i2) {
 

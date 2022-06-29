@@ -40,7 +40,9 @@ public class GameCoreographer implements SceneContext, GameWidget {
     private final ImageButton endB,startButton, easyDiffB,normalDiffB,hardDiffB;
     private final TextView easyT;
     private final Context context;
-    private final Paint p2 = new Paint();Paint p = new Paint();
+    private final Paint p2 = new Paint();
+    private final int orbYTarget;
+    Paint p = new Paint();
     AnimationDrawable frameAnimation;
     Bitmap logo;
     final Handler handler;
@@ -54,6 +56,7 @@ public class GameCoreographer implements SceneContext, GameWidget {
     private final ImageView easyTxt,normalTxt,hardTxt;
     boolean newPlayer = false;
     View selected = null;
+    private GameContext gc;
 
 
     public GameCoreographer(GameContext gameContext, ActivityFullscreenBinding binding)  {
@@ -114,7 +117,8 @@ public class GameCoreographer implements SceneContext, GameWidget {
                 Color.BLACK,Color.BLACK,Color.DKGRAY },
                 null, Shader.TileMode.REPEAT);  // CLAMP MIRROR REPEAT
         shrinkTarget = gameContext.width*2/3;
-
+        orbYTarget = (gameContext.height / 3) - (gameContext.width / 3) - (gameContext.width / 12);
+        gc = gameContext;
     }
 
 
@@ -190,9 +194,7 @@ public class GameCoreographer implements SceneContext, GameWidget {
                             easyTxt.setVisibility(View.GONE);
                             normalTxt.setVisibility(View.GONE);
                             hardTxt.setVisibility(View.GONE);
-                            shrinking=true;
-                            orbY = gv.getOrbY();
-                            shrinkOrb();
+                            mDrawableAspect.addAnimation(shrink());
                         }
                     }
                 }
@@ -238,8 +240,39 @@ public class GameCoreographer implements SceneContext, GameWidget {
 
     Bitmap orb;
     Paint p3 = new Paint();
-    boolean shrinking = false;
 
+    private GameAnimation shrink() {
+        return new GameAnimation() {
+            boolean done = false;
+            int shrinkFactor = 5;
+            @Override
+            public boolean stepAnimate() {
+                if (shrinkTarget-orbR.width() < shrinkFactor)
+                    shrinkFactor = orbR.width()-shrinkTarget;
+
+                orbR.set(0,0,orbR.width()-shrinkFactor,orbR.height()-shrinkFactor);
+                done = shrinkFactor == shrinkTarget;
+
+                return done;
+            }
+        };
+    }
+
+    private GameAnimation move() {
+        return new GameAnimation() {
+            boolean done = false;
+            int moveFactor = 2;
+            int orbC = 0;
+            @Override
+            public boolean stepAnimate() {
+                if (orbYTarget-orbC < moveFactor)
+                    moveFactor = orbYTarget-orbC;
+                orbR.offsetTo((gc.width-orbR.width())/2,orbC);
+                return false;
+            }
+        };
+
+    }
     private void shrinkOrb() {
         GameContext.tp.submit(new Runnable() {
             @Override
@@ -257,10 +290,15 @@ public class GameCoreographer implements SceneContext, GameWidget {
     }
 
 
+    DrawableGameWidget mDrawableAspect;
 
     @Override
     public List<DrawableGameWidget> getWidgets() {
-        return null;
+        List<DrawableGameWidget> l = new ArrayList<>();
+        DrawableGameWidget dgw = new DrawableGameWidget(this,0);
+        l.add(dgw);
+        mDrawableAspect = dgw;
+        return l;
     }
 
     int orbC = 0;
@@ -268,16 +306,7 @@ public class GameCoreographer implements SceneContext, GameWidget {
     public void draw(Canvas c) {
         p.setShader(mShader);
         c.drawRect(bg,p);
-        if (shrinking) {
-            orbR.set(0,0,orbR.width()-4,orbR.height()-4);
-            orbR.offsetTo((c.getWidth()-orbR.width())/2,orbC<orbY?orbC+=2:orbY);
-        } else {
-            orbR.offsetTo(0, 0);
-            c.drawBitmap(logo, c.getWidth() / 2-logo.getWidth()/2, c.getWidth() / 2 -logo.getHeight()/2, p2);
-
-
-
-        }
+        c.drawBitmap(logo, c.getWidth() / 2-logo.getWidth()/2, c.getWidth() / 2 -logo.getHeight()/2, p2);
         c.drawBitmap(orb,null,orbR,p);
     }
 }
