@@ -45,9 +45,6 @@ public class Board implements GameWidget
     private Cord okLocation;
     private boolean dragActive = false, moveActive = false;
 
-    public Board() {
-
-    }
     public Board(Context context, ScaleOptions scaleOption, StyleOptions boardStyle, StyleOptions pieceStyle, int size_with_borders, int bo, SurfaceHolderCallback _surfer) {
         int _size = scale(size_with_borders,scaleOption);
         this.boardOffset = bo;
@@ -233,14 +230,6 @@ public class Board implements GameWidget
         whiteOnTop=false;
     }
 
-    @Override
-    public void setup(GameContext gc, int offset) {
-
-    }
-
-
-
-
     public enum StyleOptions {
         plain,
         fancy,
@@ -310,6 +299,25 @@ public class Board implements GameWidget
             }
         });
     }
+
+    public GameAnimation swell() {
+        final float[] swellFactors = new float[]{1.05f,1.06f,1.1f,1.1f,1.06f,1.05f,1};
+        return new GameAnimation() {
+            int count = 0;
+            boolean done = false;
+            @Override
+            public boolean stepAnimate() {
+                swellAnimate=true;
+                swellFactor=swellFactors[count];
+                count++;
+                done = count == swellFactors.length;
+                if (done)
+                    swellAnimate = false;
+                return (done);
+            }
+        };
+    }
+
     public void swellAnimate(AnimationDoneListener animationDoneListener) {
         final float[] swellFactors = new float[]{1.05f,1.06f,1.1f,1.1f,1.06f,1.05f,1};
 
@@ -342,7 +350,7 @@ public class Board implements GameWidget
         return squares;
     }
 
-    @Override
+
     public void draw(Canvas c) {
         c.drawColor(Color.BLACK);
         if (hasEdge) {

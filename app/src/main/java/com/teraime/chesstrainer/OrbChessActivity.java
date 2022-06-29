@@ -2,9 +2,11 @@ package com.teraime.chesstrainer;
 
 import android.annotation.SuppressLint;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.database.SQLException;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,29 +32,16 @@ import java.util.concurrent.ThreadPoolExecutor;
  * status bar and navigation/system bar) with user interaction.
  */
 public class OrbChessActivity extends AppCompatActivity {
-    /**
-     * Whether or not the system UI should be auto-hidden after
-     * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
-     */
+
     private static final boolean AUTO_HIDE = true;
-
-    /**
-     * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
-     * user interaction before hiding the system UI.
-     */
     private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
-
-    /**
-     * Some older devices needs a small delay between UI widget updates
-     * and a change of the status and navigation bar.
-     */
     private static final int UI_ANIMATION_DELAY = 300;
-
     //context for the app. singleton.
-    GameContext gc = new GameContext();
-    MainGameLoop gameLoop = new MainGameLoop(gc);
+    private boolean mVisible;
+    private TextView scoreT;
     private final Handler mHideHandler = new Handler(Looper.myLooper());
     private View mContentView;
+    private GameContext mGameContext;
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
         @Override
@@ -78,9 +67,6 @@ public class OrbChessActivity extends AppCompatActivity {
     };
 
 
-    private boolean mVisible;
-    private TextView scoreT;
-    private GameView game;
 
     private final Runnable mHideRunnable = new Runnable() {
         @Override
@@ -112,17 +98,34 @@ public class OrbChessActivity extends AppCompatActivity {
         scoreT = binding.score;
         SurfaceView sf = (SurfaceView)mContentView;
         SurfaceHolder surfaceHolder = sf.getHolder();
-        GameView gv = new GameView(this,createDB(),scoreT,endB);
-        surfaceHolder.addCallback(gv);
-        surfaceHolder.addCallback(new GameCoreographer(this,binding,gv));
+        Context context = this;
+
+        surfaceHolder.addCallback(new SurfaceHolder.Callback() {
+                                      @Override
+                                      public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
+                                          mGameContext = GameContext.create(context,surfaceHolder);
+                                          SceneLoop loop = new SceneLoop(mGameContext,new GameCoreographer(mGameContext,binding));
+                                          //new GameView(this,createDB(),scoreT,endB);
+                                      }
+
+                                      @Override
+                                      public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+
+                                      }
+
+                                      @Override
+                                      public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
+
+                                      }
+                                  }
 
 
-        flipButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View _view) {
-                game.onFlipClick();
-            }
-        });
+                flipButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View _view) {
+                        game.onFlipClick();
+                    }
+                });
         testButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View _view) {

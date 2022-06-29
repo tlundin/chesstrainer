@@ -20,9 +20,10 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class GameView implements SurfaceHolder.Callback, View.OnClickListener, View.OnTouchListener,SurfaceHolderCallback {
+public class GameView implements SceneContext,SurfaceHolder.Callback, View.OnClickListener, View.OnTouchListener,SurfaceHolderCallback {
 
 
     public static float DragRectSize = 1.5f;
@@ -42,7 +43,7 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
     Bitmap happy,sad;
     private int score = 0;
 
-    public GameView(Context context, MySQLiteHelper db, TextView scoreT, ImageButton endB) {
+    public GameView(Context context, MySQLiteHelper db, TextView scoreT, ImageButton endB)  {
 
         this.context = context;
         this.db = db;
@@ -90,6 +91,12 @@ public class GameView implements SurfaceHolder.Callback, View.OnClickListener, V
         progressor = new ScoreKeeper(context, progressorOffsetY,canvasW,progressorHeight,this);
 
 
+    }
+
+    public List<DrawableGameWidget> getWidgets() {
+        List<DrawableGameWidget> ret = new ArrayList<>();
+        ret.add(new DrawableGameWidget(board,boardOffset));
+        return ret;
     }
 
     public int getOrbY() {

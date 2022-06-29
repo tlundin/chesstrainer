@@ -30,37 +30,35 @@ import androidx.annotation.NonNull;
 import com.teraime.chesstrainer.databinding.ActivityFullscreenBinding;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
 
-public class GameCoreographer implements SurfaceHolder.Callback {
+public class GameCoreographer implements SceneContext, GameWidget {
 
     private final ImageButton endB,startButton, easyDiffB,normalDiffB,hardDiffB;
     private final TextView easyT;
     private final Context context;
     private final Paint p2 = new Paint();Paint p = new Paint();
     AnimationDrawable frameAnimation;
-    SurfaceHolder surfaceHolder;
-    Bitmap newbieBmp, clubBmp, masterBmp, logo;
+    Bitmap logo;
     final Handler handler;
     Rect bg,orbR;
     Shader mShader;
     Bitmap on,off,pressed;
-
     ArrayList<View> viewsToFadeIn;
     private int shrinkTarget=0,shrinkTargetX;
     private int shrinkX;
-    private int textSize = 50;
-    private GameView gv;
     private int orbY;
-    private ImageView easyTxt,normalTxt,hardTxt;
+    private final ImageView easyTxt,normalTxt,hardTxt;
+    boolean newPlayer = false;
+    View selected = null;
 
 
-    public GameCoreographer(Context context, ActivityFullscreenBinding binding,GameView gv) {
+    public GameCoreographer(GameContext gameContext, ActivityFullscreenBinding binding)  {
 
-        this.context = context;
-        this.gv = gv;
+        this.context = gameContext.context;
         startButton = binding.startB;
         off = BitmapFactory.decodeResource(context.getResources(),R.drawable.off_button);
         pressed= BitmapFactory.decodeResource(context.getResources(),R.drawable.green_pressed);
@@ -87,18 +85,11 @@ public class GameCoreographer implements SurfaceHolder.Callback {
 
         startButton.setVisibility(View.VISIBLE);
 
-
-                init();
-
         viewsToFadeIn = new ArrayList<View>();
         viewsToFadeIn.add(easyDiffB);
         viewsToFadeIn.add(normalDiffB);
         viewsToFadeIn.add(hardDiffB);
 
-
-    }
-
-    private void init() {
 
         Tools.PersistenceHelper ph = new Tools.PersistenceHelper(context);
         String playerName = ph.getString("PLAYER");
@@ -115,19 +106,23 @@ public class GameCoreographer implements SurfaceHolder.Callback {
             Log.d("v", "player name: " + playerName);
             enableEntry();
         }
-        //new GameView(this,createDB(),scoreT,retry);
+
+
+        bg = new Rect(0,0, gameContext.width, gameContext.height);
+        orbR = new Rect(0,0,gameContext.width,gameContext.width);
+        mShader = new LinearGradient(0, 0, 0, gameContext.height, new int[] {
+                Color.BLACK,Color.BLACK,Color.DKGRAY },
+                null, Shader.TileMode.REPEAT);  // CLAMP MIRROR REPEAT
+        shrinkTarget = gameContext.width*2/3;
 
     }
 
-    boolean newPlayer = false;
-    View selected = null;
+
 
     private void displaySkillChoice() {
         easyDiffB.setVisibility(View.VISIBLE);
         normalDiffB.setVisibility(View.VISIBLE);
         hardDiffB.setVisibility(View.VISIBLE);
-
-
 
         easyDiffB.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -186,7 +181,7 @@ public class GameCoreographer implements SurfaceHolder.Callback {
                             easyTxt.setVisibility(View.VISIBLE);
                             normalTxt.setVisibility(View.VISIBLE);
                             hardTxt.setVisibility(View.VISIBLE);
-                            invalidate();
+
                         } else {
                             hardDiffB.setVisibility(View.GONE);
                             easyDiffB.setVisibility(View.GONE);
@@ -239,28 +234,7 @@ public class GameCoreographer implements SurfaceHolder.Callback {
     }
 
 
-    @Override
-    public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-        Log.d("v","getzz");
-        this.surfaceHolder=surfaceHolder;
-        Canvas c = surfaceHolder.lockCanvas();
-        bg = new Rect(0,0,c.getWidth(),c.getHeight());
-        orbR = new Rect(0,0,c.getWidth(),c.getWidth());
-        mShader = new LinearGradient(0, 0, 0, c.getHeight(), new int[] {
-                Color.BLACK,Color.BLACK,Color.DKGRAY },
-                null, Shader.TileMode.REPEAT);  // CLAMP MIRROR REPEAT
-        shrinkTarget = c.getWidth()*2/3;
-        surfaceHolder.unlockCanvasAndPost(c);
-        invalidate();
 
-
-    }
-
-    private void invalidate() {
-        Canvas c = surfaceHolder.lockCanvas();
-        drawSplash(c);
-        surfaceHolder.unlockCanvasAndPost(c);
-    }
 
     Bitmap orb;
     Paint p3 = new Paint();
@@ -276,15 +250,22 @@ public class GameCoreographer implements SurfaceHolder.Callback {
                         shrinkFactor+= (shrinkTarget-shrinkFactor);
                     else
                         shrinkFactor+=5;
-                    invalidate();
+
                 }
-                surfaceHolder.removeCallback(GameCoreographer.this);
-                gv.surfaceChanged();
             }
         });
     }
+
+
+
+    @Override
+    public List<DrawableGameWidget> getWidgets() {
+        return null;
+    }
+
     int orbC = 0;
-    private void drawSplash(Canvas c) {
+    @Override
+    public void draw(Canvas c) {
         p.setShader(mShader);
         c.drawRect(bg,p);
         if (shrinking) {
@@ -298,22 +279,5 @@ public class GameCoreographer implements SurfaceHolder.Callback {
 
         }
         c.drawBitmap(orb,null,orbR,p);
-
-
-        //p2.setTextSize(35);
-        //if (newPlayer && selected == null)
-        //    c.drawText("Please choose",c.getWidth()/2,c.getWidth()-easyDiffB.getHeight()+35,p2);
-
-
-    }
-
-    @Override
-    public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-
-    }
-
-    @Override
-    public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
-
     }
 }
