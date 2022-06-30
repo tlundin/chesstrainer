@@ -8,9 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SceneLoop {
     private final Runnable mLoop;
     AtomicBoolean alive = new AtomicBoolean(true);
-    GameContext gc;
     public SceneLoop(GameContext gc, SceneContext scene) {
-        this.gc = gc;
         mLoop = new Runnable() {
             Canvas c;
             @Override
@@ -18,6 +16,7 @@ public class SceneLoop {
 
                 int i = 0; long t1,diff;
                 while (alive.get()) {
+                    Log.d("vovo","gtzz");
                     t1 = System.currentTimeMillis();
                     c = gc.sh.lockCanvas();
 
@@ -32,13 +31,14 @@ public class SceneLoop {
                     gc.sh.unlockCanvasAndPost(c);
 
                     diff = System.currentTimeMillis() - t1;
-
-                    try {
-                        Thread.sleep(60-diff);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    Log.d("v", "t" + i++ + " (" + (System.currentTimeMillis()-t1) + " )");
+                    if (diff < 60) {
+                        try {
+                            Thread.sleep(60 - diff);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    } else
+                        Log.d("v", "t" + i++ + " (" + diff + " )");
                 }
             }
         };
@@ -48,7 +48,7 @@ public class SceneLoop {
 
     public void start() {
         alive.set(true);
-        gc.tp.submit(mLoop);
+        GameContext.tp.submit(mLoop);
     }
     public void kill() {
         alive.set(false);

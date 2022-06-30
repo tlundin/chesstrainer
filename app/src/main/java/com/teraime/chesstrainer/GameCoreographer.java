@@ -57,6 +57,8 @@ public class GameCoreographer implements SceneContext, GameWidget {
     boolean newPlayer = false;
     View selected = null;
     private GameContext gc;
+    final private List<DrawableGameWidget> mWidgets = new ArrayList<>();
+
 
 
     public GameCoreographer(GameContext gameContext, ActivityFullscreenBinding binding)  {
@@ -119,6 +121,10 @@ public class GameCoreographer implements SceneContext, GameWidget {
         shrinkTarget = gameContext.width*2/3;
         orbYTarget = (gameContext.height / 3) - (gameContext.width / 3) - (gameContext.width / 12);
         gc = gameContext;
+
+        DrawableGameWidget dgw = new DrawableGameWidget(this,0);
+        mWidgets.add(dgw);
+        mDrawableAspect = dgw;
     }
 
 
@@ -252,7 +258,7 @@ public class GameCoreographer implements SceneContext, GameWidget {
                     shrinkFactor = orbR.width()-shrinkTarget;
 
                 orbR.set(0,0,orbR.width()-shrinkFactor,orbR.height()-shrinkFactor);
-                done = shrinkFactor == shrinkTarget;
+                done = orbR.width() == shrinkTarget;
 
                 return done;
             }
@@ -266,10 +272,12 @@ public class GameCoreographer implements SceneContext, GameWidget {
             int orbC = 0;
             @Override
             public boolean stepAnimate() {
-                if (orbYTarget-orbC < moveFactor)
-                    moveFactor = orbYTarget-orbC;
+                if (orbYTarget-orbC < moveFactor) {
+                    moveFactor = orbYTarget - orbC;
+                    done = true;
+                }
                 orbR.offsetTo((gc.width-orbR.width())/2,orbC);
-                return false;
+                return done;
             }
         };
 
@@ -295,14 +303,11 @@ public class GameCoreographer implements SceneContext, GameWidget {
 
     @Override
     public List<DrawableGameWidget> getWidgets() {
-        List<DrawableGameWidget> l = new ArrayList<>();
-        DrawableGameWidget dgw = new DrawableGameWidget(this,0);
-        l.add(dgw);
-        mDrawableAspect = dgw;
-        return l;
+
+        return mWidgets;
     }
 
-    int orbC = 0;
+
     @Override
     public void draw(Canvas c) {
         p.setShader(mShader);

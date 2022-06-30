@@ -1,6 +1,7 @@
 package com.teraime.chesstrainer;
 
 import android.graphics.Canvas;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,7 @@ class DrawableGameWidget {
         }
 
         public void addAnimation(GameAnimation gAnim ) {
+                Log.d("v","ADD called");
                 animations.add(gAnim);
         }
         public void draw(Canvas c) {
@@ -31,7 +33,9 @@ class DrawableGameWidget {
         public void stepAnimate() {
                 for (GameAnimation gameAnimation:animations) {
                         if (gameAnimation.stepAnimate()) {
+                                Log.d("v","removed");
                                 animations.remove(gameAnimation);
+
                         }
                 }
         }
