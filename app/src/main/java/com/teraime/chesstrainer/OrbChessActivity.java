@@ -106,6 +106,7 @@ public class OrbChessActivity extends AppCompatActivity {
                                           mGameContext = GameContext.create(context,surfaceHolder);
                                           SceneLoop loop = new SceneLoop(mGameContext,new GameCoreographer(mGameContext,binding));
                                           //new GameView(this,createDB(),scoreT,endB);
+                                          loop.start();
                                       }
 
                                       @Override
@@ -117,25 +118,26 @@ public class OrbChessActivity extends AppCompatActivity {
                                       public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
 
                                       }
-                                  }
+                                  });
 
 
                 flipButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View _view) {
-                        game.onFlipClick();
+                        //game.onFlipClick();
                     }
                 });
         testButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View _view) {
-                game.onTestClick();
+
+                //game.onTestClick();
             }
         });
         resetButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View _view) {
-                game.onResetClick();
+               // game.onResetClick();
             }
         });
 

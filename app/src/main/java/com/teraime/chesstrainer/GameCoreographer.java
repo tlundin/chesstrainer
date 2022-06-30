@@ -195,6 +195,7 @@ public class GameCoreographer implements SceneContext, GameWidget {
                             normalTxt.setVisibility(View.GONE);
                             hardTxt.setVisibility(View.GONE);
                             mDrawableAspect.addAnimation(shrink());
+                            mDrawableAspect.addAnimation(move());
                         }
                     }
                 }

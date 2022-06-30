@@ -6,11 +6,12 @@ import android.util.Log;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SceneLoop {
+    private final Runnable mLoop;
     AtomicBoolean alive = new AtomicBoolean(true);
-
+    GameContext gc;
     public SceneLoop(GameContext gc, SceneContext scene) {
-
-        Runnable mainloop = new Runnable() {
+        this.gc = gc;
+        mLoop = new Runnable() {
             Canvas c;
             @Override
             public void run() {
@@ -45,6 +46,10 @@ public class SceneLoop {
 
     }
 
+    public void start() {
+        alive.set(true);
+        gc.tp.submit(mLoop);
+    }
     public void kill() {
         alive.set(false);
     }
