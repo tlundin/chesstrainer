@@ -5,13 +5,15 @@ import android.util.Log;
 public class TacticsHandler implements MoveCallBack_I {
 
     private MoveList moveList;
+    private DrawableGameWidget wBoard;
     private Board board;
     private GameView gv;
 
-    public TacticsHandler(MoveList ml, Board board,GameView gv) {
+    public TacticsHandler(MoveList ml, GameView gv) {
         this.moveList = ml;
         this.board = board;
         this.gv = gv;
+        wBoard = gv.getBoardWidget();
     }
 
     @Override
@@ -48,7 +50,7 @@ public class TacticsHandler implements MoveCallBack_I {
                         Log.d("v", "another move!");
                         board.move(moveList.getCurrentPosition().getMove());
                     } else {
-                        board.okAnimate(bMove.to, new AnimationDoneListener() {
+                        wBoard.addAnimation(board.okAnimate(bMove.to), new AnimationDoneListener() {
                             @Override
                             public void onAnimationDone() {
                                 gv.nextLevel();
@@ -56,7 +58,7 @@ public class TacticsHandler implements MoveCallBack_I {
                         });
                     }
                 } else {
-                    board.swellAnimate(new AnimationDoneListener() {
+                    wBoard.addAnimation(board.swell(),new AnimationDoneListener() {
                         @Override
                         public void onAnimationDone() {
                             gv.onFail();

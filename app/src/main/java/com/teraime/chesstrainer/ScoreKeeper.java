@@ -8,10 +8,10 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
-import android.graphics.Rect;
 import android.graphics.RectF;
+import android.util.Log;
 
-public class ScoreKeeper {
+public class ScoreKeeper implements GameWidget {
 
     final RectF box;
     final int offset,radius;
@@ -23,7 +23,7 @@ public class ScoreKeeper {
     private Path segment = new Path();
 
     int width,height;
-    public ScoreKeeper(Context ctx, int _offset, int _width, int _height, SurfaceHolderCallback _surfer) {
+    public ScoreKeeper(Context ctx, int _offset, int _width, int _height) {
         width = _width;
         height = _height;
         box = new RectF(0,0,_height,_height);
@@ -32,7 +32,7 @@ public class ScoreKeeper {
         radius = _height / 2;
         offset=_offset;
         glassBall = BitmapFactory.decodeResource(ctx.getResources(),R.drawable.glassball4);
-
+        Log.d("box ",box.width()+" off "+offset);
 
         pR.setColor(Color.GREEN);
     }
@@ -51,14 +51,16 @@ public class ScoreKeeper {
         segment.close();
     }
 
-    public void onDraw(Canvas c) {
-
-        c.save();
-        c.translate(0,offset);
+    public void draw(Canvas c) {
         box.offsetTo(width/3,0);
-
         c.drawPath(segment, pR);
         c.drawBitmap(glassBall,null,box,p);
+
+    }
+
+    @Override
+    public String getName() {
+        return "orb";
     }
 
     public void setFillValue(int newValueAsPercent) {

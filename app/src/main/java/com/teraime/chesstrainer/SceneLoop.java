@@ -3,43 +3,46 @@ package com.teraime.chesstrainer;
 import android.graphics.Canvas;
 import android.util.Log;
 
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SceneLoop {
+    static int FRAME_RATE = 30;
     private final Runnable mLoop;
-    AtomicBoolean alive = new AtomicBoolean(true);
+    AtomicBoolean alive = new AtomicBoolean(false);
+    AtomicBoolean stopped = new AtomicBoolean(false);
     public SceneLoop(GameContext gc, SceneContext scene) {
         mLoop = new Runnable() {
             Canvas c;
             @Override
             public void run() {
-
                 int i = 0; long t1,diff;
                 while (alive.get()) {
-                    Log.d("vovo","gtzz");
                     t1 = System.currentTimeMillis();
-                    c = gc.sh.lockCanvas();
+                    if (!stopped.get()) {
+                        c = gc.sh.lockCanvas();
+                        scene.getWidgets().forEach(gw ->  {
+                            c.save();
+                            c.translate(0, gw.getOffset());
+                            gw.stepAnimate();
+                            gw.draw(c);
+                            c.restore();
+                        });
 
-                    for (DrawableGameWidget gw : scene.getWidgets()) {
-                        c.save();
-                        c.translate(0,gw.getOffset());
-                        gw.stepAnimate();
-                        gw.draw(c);
-
+                        gc.sh.unlockCanvasAndPost(c);
                     }
+                        diff = System.currentTimeMillis() - t1;
+                        if (diff < FRAME_RATE) {
+                            try {
+                                Thread.sleep(FRAME_RATE - diff);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }// else
+                        //   Log.d("v", "t" + i++ + " (" + diff + " )");
 
-                    gc.sh.unlockCanvasAndPost(c);
-
-                    diff = System.currentTimeMillis() - t1;
-                    if (diff < 60) {
-                        try {
-                            Thread.sleep(60 - diff);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    } else
-                        Log.d("v", "t" + i++ + " (" + diff + " )");
                 }
+                Log.d("v","I died");
             }
         };
 
@@ -47,13 +50,23 @@ public class SceneLoop {
     }
 
     public void start() {
-        alive.set(true);
-        GameContext.tp.submit(mLoop);
+        stopped.set(false);
+        if (!alive.get()) {
+            alive.set(true);
+            GameContext.tp.execute(mLoop);
+        }
     }
     public void kill() {
+        Log.d("v","kill call");
         alive.set(false);
-    }
-    public void addDrawable(DrawableGameWidget widget) {
 
+    }
+
+    public void stop() {
+        stopped.set(true);
+    }
+
+    public void setSpeed(int i) {
+        FRAME_RATE = i;
     }
 }

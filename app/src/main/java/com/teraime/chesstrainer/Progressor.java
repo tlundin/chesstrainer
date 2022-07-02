@@ -40,15 +40,13 @@ public class Progressor {
     int scrollFactor=0;int textSize;
     float pointRectBorderW;
     final Handler animationHandler = new Handler(Looper.myLooper());
-    final SurfaceHolderCallback surfer;
     final Rect diffRect,goalRect,starRect;
     RectF rectouter, rectinner;
     final Bitmap skull,grimreaper,goalflag,knight,golden_knight;
     private Paint gradientP;
 
 
-    public Progressor(Context ctx, int _offset, int _width, int _height, SurfaceHolderCallback _surfer) {
-        surfer=_surfer;
+    public Progressor(Context ctx, int _offset, int _width, int _height) {
         offset=_offset;
         width=_width; height = _height;
         ballRadius = height/4;
@@ -148,7 +146,7 @@ public class Progressor {
                     sleepTime = Math.max(sleepTime - 15,0);
                     while (scrollSteps > 0) {
                         scrollFactor += scrollPerIteration;
-                        invalidateView();
+
                         try {
                             Thread.sleep(sleepTime);
                         } catch (InterruptedException e) {
@@ -175,9 +173,7 @@ public class Progressor {
         });
     }
 
-    private void invalidateView() {
-        surfer.surfaceChanged();
-    }
+
 
     private void drawLevel(Canvas c, int level,int stars, int left, int top) {
 
@@ -215,7 +211,7 @@ public class Progressor {
         for (int i = 0; i<5;i++) {
             int curr = i+lvl;
             LevelDescriptor ld = getLevel(curr);
-            Difficulty difficulty = surfer.getDifficulty(curr);
+            Difficulty difficulty = Difficulty.normal;//surfer.getDifficulty(curr);
             int x = pStartOffsetX+width/4*(i+1)-scrollFactor;
             drawLevel(c,curr,1,x,centre-(int)rectouter.height()/2);
             //c.drawCircle(x,centre,ballRadius,(curr == mStoplevel)?pT:pB);

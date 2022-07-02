@@ -31,6 +31,8 @@ import com.teraime.chesstrainer.databinding.ActivityFullscreenBinding;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -57,7 +59,9 @@ public class GameCoreographer implements SceneContext, GameWidget {
     boolean newPlayer = false;
     View selected = null;
     private GameContext gc;
-    final private List<DrawableGameWidget> mWidgets = new ArrayList<>();
+    final private Queue<DrawableGameWidget> mWidgets = new ConcurrentLinkedQueue<>();
+    final Bitmap orb;
+
 
 
 
@@ -96,9 +100,8 @@ public class GameCoreographer implements SceneContext, GameWidget {
         viewsToFadeIn.add(hardDiffB);
 
 
-        Tools.PersistenceHelper ph = new Tools.PersistenceHelper(context);
-        String playerName = ph.getString("PLAYER");
-        if (playerName.equals(Tools.PersistenceHelper.UNDEFINED)) {
+        User user = Tools.getUser();
+        if (false) {//playerName.equals(Tools.PersistenceHelper.UNDEFINED)) {
             Log.d("v", "new player");
             handler.post(new Runnable() {
                 @Override
@@ -108,8 +111,8 @@ public class GameCoreographer implements SceneContext, GameWidget {
             });
 
         } else {
-            Log.d("v", "player name: " + playerName);
-            enableEntry();
+            Log.d("v", "player name: " + user.name);
+            enableEntry(false);
         }
 
 
@@ -118,7 +121,7 @@ public class GameCoreographer implements SceneContext, GameWidget {
         mShader = new LinearGradient(0, 0, 0, gameContext.height, new int[] {
                 Color.BLACK,Color.BLACK,Color.DKGRAY },
                 null, Shader.TileMode.REPEAT);  // CLAMP MIRROR REPEAT
-        shrinkTarget = gameContext.width*2/3;
+        shrinkTarget = gameContext.width*2/6;
         orbYTarget = (gameContext.height / 3) - (gameContext.width / 3) - (gameContext.width / 12);
         gc = gameContext;
 
@@ -143,7 +146,7 @@ public class GameCoreographer implements SceneContext, GameWidget {
                 easyDiffB.setBackground(context.getDrawable(R.drawable.easy_selected_button));
                 easyT.setText("EASY");
                 easyT.setVisibility(View.VISIBLE);
-                enableEntry();
+                enableEntry(true);
             }
         });
         normalDiffB.setOnClickListener(new View.OnClickListener() {
@@ -155,7 +158,7 @@ public class GameCoreographer implements SceneContext, GameWidget {
                 easyDiffB.setBackground(context.getDrawable(R.drawable.diff_easy));
                 easyT.setText("NORMAL");
                 easyT.setVisibility(View.VISIBLE);
-                enableEntry();
+                enableEntry(true);
             }
         });
         hardDiffB.setOnClickListener(new View.OnClickListener() {
@@ -167,21 +170,21 @@ public class GameCoreographer implements SceneContext, GameWidget {
                 easyDiffB.setBackground(context.getDrawable(R.drawable.diff_easy));
                 easyT.setText("HARD");
                 easyT.setVisibility(View.VISIBLE);
-                enableEntry();
+                enableEntry(true);
             }
         });
 
         for (View v : viewsToFadeIn) {
             v.setAlpha(0); // make invisible to start
         }
-        fade(1);
+        fade(1,1500);
 
     }
 
-    private void fade(float target) {
+    private void fade(float target,int duration) {
         int i = 1;
         for (View v : viewsToFadeIn) {
-            v.animate().alpha(target).setDuration(i*1500).withEndAction(new Runnable() {
+            v.animate().alpha(target).setDuration(i*duration).withEndAction(new Runnable() {
                 @Override
                 public void run() {
                     if (v.equals(hardDiffB)) {
@@ -196,12 +199,10 @@ public class GameCoreographer implements SceneContext, GameWidget {
                             hardDiffB.setVisibility(View.GONE);
                             easyDiffB.setVisibility(View.GONE);
                             normalDiffB.setVisibility(View.GONE);
-                            startButton.setVisibility(View.GONE);
                             easyTxt.setVisibility(View.GONE);
                             normalTxt.setVisibility(View.GONE);
                             hardTxt.setVisibility(View.GONE);
-                            mDrawableAspect.addAnimation(shrink());
-                            mDrawableAspect.addAnimation(move());
+                            exit();
                         }
                     }
                 }
@@ -211,9 +212,22 @@ public class GameCoreographer implements SceneContext, GameWidget {
 
     }
 
+    private void exit() {
+        mDrawableAspect.addAnimation(shrink(), new AnimationDoneListener() {
+            @Override
+            public void onAnimationDone() {
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override
+                    public void run() {
+                        startButton.setVisibility(View.GONE);
+                    }
+                });
+                gc.sceneDone();
+            }});
+        mDrawableAspect.addAnimation(move());
+    }
 
-
-    private void enableEntry() {
+    private void enableEntry(boolean newPlayer) {
         startButton.setBackgroundResource(R.drawable.buttonfade);
         frameAnimation = (AnimationDrawable) startButton.getBackground();
         handler.post(new Runnable(){
@@ -232,8 +246,11 @@ public class GameCoreographer implements SceneContext, GameWidget {
                         break;
                     case MotionEvent.ACTION_UP:
                         startButton.setImageBitmap(on);
-                        easyT.setVisibility(View.GONE);
-                        fade(0);
+                        if (newPlayer) {
+                            easyT.setVisibility(View.GONE);
+                            fade(0, 500);
+                        } else
+                            exit();
                         startButton.setOnTouchListener(null);
                         break;
                 }
@@ -245,64 +262,53 @@ public class GameCoreographer implements SceneContext, GameWidget {
 
 
 
-    Bitmap orb;
-    Paint p3 = new Paint();
+
 
     private GameAnimation shrink() {
+        Log.d("v","st "+shrinkTarget+" yt"+orbYTarget);
         return new GameAnimation() {
             boolean done = false;
-            int shrinkFactor = 5;
+            int shrinkFactor = 10;
             @Override
             public boolean stepAnimate() {
-                if (shrinkTarget-orbR.width() < shrinkFactor)
-                    shrinkFactor = orbR.width()-shrinkTarget;
-
+                if ((orbR.width()-shrinkTarget) < shrinkFactor) {
+                    shrinkFactor = orbR.width() - shrinkTarget;
+                    done = true;
+                    Log.d("wack","done shrink");
+                }
                 orbR.set(0,0,orbR.width()-shrinkFactor,orbR.height()-shrinkFactor);
-                done = orbR.width() == shrinkTarget;
 
                 return done;
             }
         };
     }
 
+    float orbC=0;
     private GameAnimation move() {
         return new GameAnimation() {
             boolean done = false;
-            int moveFactor = 2;
-            int orbC = 0;
+            float moveFactor = 2.5f;
+            ;
             @Override
             public boolean stepAnimate() {
                 if (orbYTarget-orbC < moveFactor) {
                     moveFactor = orbYTarget - orbC;
                     done = true;
+                    Log.d("wack","done move");
                 }
-                orbR.offsetTo((gc.width-orbR.width())/2,orbC);
+                orbC+=moveFactor;
+                //Log.d("orb","T: "+orbYTarget+" Y: "+orbC);
+
                 return done;
             }
         };
 
     }
-    private void shrinkOrb() {
-        GameContext.tp.submit(new Runnable() {
-            @Override
-            public void run() {
-                int shrinkFactor = 0;
-                while(shrinkFactor < shrinkTarget) {
-                    if (shrinkTarget-shrinkFactor < 5)
-                        shrinkFactor+= (shrinkTarget-shrinkFactor);
-                    else
-                        shrinkFactor+=5;
-
-                }
-            }
-        });
-    }
-
 
     DrawableGameWidget mDrawableAspect;
 
     @Override
-    public List<DrawableGameWidget> getWidgets() {
+    public Queue<DrawableGameWidget> getWidgets() {
 
         return mWidgets;
     }
@@ -312,7 +318,14 @@ public class GameCoreographer implements SceneContext, GameWidget {
     public void draw(Canvas c) {
         p.setShader(mShader);
         c.drawRect(bg,p);
-        c.drawBitmap(logo, c.getWidth() / 2-logo.getWidth()/2, c.getWidth() / 2 -logo.getHeight()/2, p2);
+        if (orbC == 0)
+            c.drawBitmap(logo, c.getWidth() / 2-logo.getWidth()/2, c.getWidth() / 2 -logo.getHeight()/2, p2);
+        orbR.offsetTo((gc.width-orbR.width())/2,(int)orbC);
         c.drawBitmap(orb,null,orbR,p);
+    }
+
+    @Override
+    public String getName() {
+        return "intro";
     }
 }

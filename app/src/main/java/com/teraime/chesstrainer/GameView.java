@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Point;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -22,8 +23,10 @@ import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class GameView implements SceneContext,SurfaceHolder.Callback, View.OnClickListener, View.OnTouchListener,SurfaceHolderCallback {
+public class GameView implements SceneContext, View.OnClickListener, View.OnTouchListener {
 
 
     public static float DragRectSize = 1.5f;
@@ -31,9 +34,10 @@ public class GameView implements SceneContext,SurfaceHolder.Callback, View.OnCli
     private final Animation shake;
     private final Handler shakeHandler;
     private final Runnable repeatShake;
+    private final DrawableGameWidget boardDrawableWidget;
     private Board board;
+    private StageWidget stageWidget;
     private ScoreKeeper progressor;
-    private SurfaceHolder mSurfaceHolder = null;
     private boolean moveIsActive = false;
     private MySQLiteHelper db;
     private ChessPosition boardAfterMove;
@@ -42,6 +46,8 @@ public class GameView implements SceneContext,SurfaceHolder.Callback, View.OnCli
     ImageButton endButton;
     Bitmap happy,sad;
     private int score = 0;
+    String TAG = "GameView";
+    private final Queue<DrawableGameWidget> mWidgets;
 
     public GameView(Context context, MySQLiteHelper db, TextView scoreT, ImageButton endB)  {
 
@@ -50,7 +56,7 @@ public class GameView implements SceneContext,SurfaceHolder.Callback, View.OnCli
         this.scoreT = scoreT;
         this.endButton = endB;
         this.shake = AnimationUtils.loadAnimation(context, R.anim.shake);
-        shakeHandler = new Handler();
+        shakeHandler = new Handler(Looper.getMainLooper());
         final boolean[] first = {true};
         repeatShake = new Runnable() {
             @Override
@@ -69,54 +75,38 @@ public class GameView implements SceneContext,SurfaceHolder.Callback, View.OnCli
         };
         happy = BitmapFactory.decodeResource(context.getResources(), R.drawable.happy);
         sad = BitmapFactory.decodeResource(context.getResources(),R.drawable.sad);
-
-    }
-    String TAG = "beboop";
-
-    @Override
-    public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-        Log.d(TAG,"Surf is good");
-        mSurfaceHolder=surfaceHolder;
-        int canvasW = surfaceHolder.getSurfaceFrame().width();
-        int canvasH = surfaceHolder.getSurfaceFrame().height();
+        int canvasW = GameContext.gc.width;
+        int canvasH = GameContext.gc.height;
         Log.d("zurf","CANVAS "+canvasW+" "+canvasH);
         boardOffset = canvasH/3;
         //Board is screenw wide. Let progressor be about two squares wide.
         progressorHeight = canvasW/3;
         progressorOffsetY = boardOffset-progressorHeight-canvasW/12;
-        board = new Board(context,Board.ScaleOptions.MAX, Board.StyleOptions.plain, Board.StyleOptions.plain,canvasW, boardOffset, this);
+        board = new Board(context,Board.ScaleOptions.MAX, Board.StyleOptions.plain, Board.StyleOptions.plain,canvasW, boardOffset);
+
         ChessPosition pos = new ChessPosition(INITIAL_BOARD);//new ChessPosition(GameState.convertFenToBoard(ChessConstants.FEN_STARTING_POSITION));
         pos.print();
         board.setupPosition(pos);
-        progressor = new ScoreKeeper(context, progressorOffsetY,canvasW,progressorHeight,this);
-
-
-    }
-
-    public List<DrawableGameWidget> getWidgets() {
-        List<DrawableGameWidget> ret = new ArrayList<>();
-        ret.add(new DrawableGameWidget(board,boardOffset));
-        return ret;
-    }
-
-    @Override
-    public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+        User user = Tools.getUser();
+        progressor = new ScoreKeeper(context, progressorOffsetY,canvasW,progressorHeight);
+        stageWidget = new StageWidget(context,boardOffset,canvasW,canvasW,board.getSquareSize(),user.stage);
+        mWidgets = new ConcurrentLinkedQueue<>();
+        boardDrawableWidget = new DrawableGameWidget(board,boardOffset);
+        mWidgets.add(boardDrawableWidget);
+        mWidgets.add(new DrawableGameWidget(progressor,progressorOffsetY));
 
     }
 
-    @Override
-    public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
-
+    public Queue<DrawableGameWidget> getWidgets() {
+        return mWidgets;
     }
 
-    @Override
-    public void surfaceChanged() {
-        if (mSurfaceHolder != null) {
-            Canvas c = mSurfaceHolder.lockCanvas();
-            board.onDraw(c);
-            progressor.onDraw(c);
-            mSurfaceHolder.unlockCanvasAndPost(c);
-        }
+    public DrawableGameWidget getBoardWidget() {
+        return boardDrawableWidget;
+    }
+
+    public void addStageWidget() {
+        mWidgets.add(new DrawableGameWidget(stageWidget,boardOffset));
     }
 
     public void onFail() {
@@ -136,7 +126,6 @@ public class GameView implements SceneContext,SurfaceHolder.Callback, View.OnCli
             });
         } else {
             progressor.setFillValue(currFill);
-            surfaceChanged();
             onTestClickFail();
         }
     }
@@ -161,9 +150,7 @@ public class GameView implements SceneContext,SurfaceHolder.Callback, View.OnCli
 
              */
             currFill = (currFill+10);
-
             progressor.setFillValue(currFill);
-            this.surfaceChanged();
             if (currFill == 100) {
 
                 endButton.setImageBitmap(happy);
@@ -175,30 +162,30 @@ public class GameView implements SceneContext,SurfaceHolder.Callback, View.OnCli
                         shakeHandler.removeCallbacks(repeatShake);
                         endButton.setVisibility(View.GONE);
                         currFill = 0;
-                        surfaceChanged();
                         onTestClickSuccess();
                     }
                 });
             }
-
             onTestClickSuccess();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    @Override
     public void moveIsActive() {
         moveIsActive = true;
     }
-    @Override
+
     public void moveIsDone() {
         board.setupPosition(boardAfterMove);
         boardAfterMove.print();
-        surfaceChanged();
         moveIsActive = false;
         if (moveListener != null)
             moveListener.onMoveDone();
+    }
+
+    public Board getBoard() {
+        return board;
     }
 
     @Override
@@ -214,6 +201,7 @@ public class GameView implements SceneContext,SurfaceHolder.Callback, View.OnCli
     public boolean onTouch(View view, MotionEvent motionEvent) {
         int x = (int)motionEvent.getX();
         int y = (int)motionEvent.getY()-boardOffset;
+        Cord movingPieceInitialPosition = null;
         switch (motionEvent.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 if (!moveIsActive && !dragActive) {
@@ -227,7 +215,8 @@ public class GameView implements SceneContext,SurfaceHolder.Callback, View.OnCli
                         } else
                             dragActive = true;
                         if (dragActive) {
-                            board.startDrag(board.calculateColRow(x, y), draggedPiece);
+                            movingPieceInitialPosition = board.calculateColRow(x, y);
+                            board.startDrag(movingPieceInitialPosition, draggedPiece);
                         }
                     }
                 }
@@ -235,8 +224,7 @@ public class GameView implements SceneContext,SurfaceHolder.Callback, View.OnCli
             case MotionEvent.ACTION_UP:
                 if (dragActive) {
                     dragActive = false;
-                    BasicMove bMove= board.dropMovingPiece(new Point(x, y), draggedPiece);
-                    surfaceChanged();
+                    BasicMove bMove= board.dropMovingPiece(movingPieceInitialPosition,new Point(x, y), draggedPiece);
                     if (dragListener != null && bMove != null) {
                         dragListener.onDragDone(bMove);
                     }
@@ -246,7 +234,6 @@ public class GameView implements SceneContext,SurfaceHolder.Callback, View.OnCli
                 if (dragActive) {
                     int dragPoint = (int)(board.getSquareSize()*DragRectSize/2);
                     board.moveDragRect(new Point(x-dragPoint,y-dragPoint));
-                    surfaceChanged();
                 }
                 break;
             default:
@@ -256,12 +243,7 @@ public class GameView implements SceneContext,SurfaceHolder.Callback, View.OnCli
     }
 
     public void onFlipClick() {
-        if (mSurfaceHolder != null) {
-            board.flip();
-            Canvas c = mSurfaceHolder.lockCanvas();
-            board.onDraw(c);
-            mSurfaceHolder.unlockCanvasAndPost(c);
-        }
+        board.flip();
     }
 
     float lastmin=0,currentMin=0;
@@ -313,11 +295,11 @@ public class GameView implements SceneContext,SurfaceHolder.Callback, View.OnCli
                 board.setWhiteOnTop();
             else
                 board.setBlackOnTop();
-            this.surfaceChanged();
+
             if (ml.goForward()) {
                 Move moveThatLeadHere = ml.getCurrentPosition().getMove();
                 Log.d("v", "Move to do: " + moveThatLeadHere.getShortNoFancy() + " raw: " + moveThatLeadHere.getRawNotation() + " ts: " + moveThatLeadHere.toString());
-                this.registerDragAndMoveListener(new TacticsHandler(ml, board,this));
+                this.registerDragAndMoveListener(new TacticsHandler(ml,this));
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {
@@ -336,13 +318,7 @@ public class GameView implements SceneContext,SurfaceHolder.Callback, View.OnCli
     }
 
     public void onResetClick() {
-        if (mSurfaceHolder != null) {
             board.setupPosition(new ChessPosition(INITIAL_BOARD));
-            Canvas c = mSurfaceHolder.lockCanvas();
-            board.onDraw(c);
-            mSurfaceHolder.unlockCanvasAndPost(c);
-        }
-
     }
 
     public void setCurrentGameState(GameState newState) {

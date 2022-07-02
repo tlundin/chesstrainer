@@ -31,7 +31,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class OrbChessActivity extends AppCompatActivity {
+public class OrbChessActivity extends AppCompatActivity implements SceneManager {
 
     private static final boolean AUTO_HIDE = true;
     private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
@@ -39,9 +39,11 @@ public class OrbChessActivity extends AppCompatActivity {
     //context for the app. singleton.
     private boolean mVisible;
     private TextView scoreT;
+    private ImageButton endB;
     private final Handler mHideHandler = new Handler(Looper.myLooper());
     private View mContentView;
     private GameContext mGameContext;
+    private SceneLoop loop;
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
         @Override
@@ -93,7 +95,7 @@ public class OrbChessActivity extends AppCompatActivity {
         Button flipButton = binding.flip;
         Button testButton = binding.test;
         Button resetButton = binding.reset;
-        ImageButton endB = binding.endB;
+        endB = binding.endB;
 
         scoreT = binding.score;
         SurfaceView sf = (SurfaceView)mContentView;
@@ -103,9 +105,8 @@ public class OrbChessActivity extends AppCompatActivity {
         surfaceHolder.addCallback(new SurfaceHolder.Callback() {
                                       @Override
                                       public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-                                          mGameContext = GameContext.create(context,surfaceHolder);
-                                          SceneLoop loop = new SceneLoop(mGameContext,new GameCoreographer(mGameContext,binding));
-                                          //new GameView(this,createDB(),scoreT,endB);
+                                          mGameContext = GameContext.create(context,surfaceHolder,OrbChessActivity.this);
+                                          loop = new SceneLoop(mGameContext,new GameCoreographer(mGameContext,binding));
                                           loop.start();
                                       }
 
@@ -215,5 +216,142 @@ public class OrbChessActivity extends AppCompatActivity {
             throw e;
         }
         return myDBH;
+    }
+
+    @Override
+    public void onSceneDone() {
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        loop.kill();
+        GameView gv = new GameView(this,createDB(),scoreT,endB);
+        loop = new SceneLoop(mGameContext,gv);
+        gv.getBoard().setFade(0);
+        DrawableGameWidget bWidget = gv.getBoardWidget();
+        bWidget.addAnimation(gv.getBoard().fadeBoard(1, 2000), new AnimationDoneListener() {
+            @Override
+            public void onAnimationDone() {
+                loop.stop();
+                Move m1 = new Move(0,0,1,2);
+                Move m2 = new Move(7,0,6,2);
+                Move m3 = new Move(0,7,1,5);
+                Move m4 = new Move(7,7,6,5);
+                bWidget.addAnimation(gv.getBoard().move(m1,PathFactory.Type.Jump));
+                bWidget.addAnimation(gv.getBoard().move(m2,PathFactory.Type.Jump));
+                bWidget.addAnimation(gv.getBoard().move(m3,PathFactory.Type.Jump));
+                bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
+                    @Override
+                    public void onAnimationDone() {
+                        loop.stop();
+                        Move m1 = new Move(2,0,3,2);
+                        Move m2 = new Move(5,0,5,2);
+                        Move m3 = new Move(2,7,3,5);
+                        Move m4 = new Move(5,7,5,5);
+                        bWidget.addAnimation(gv.getBoard().move(m1,PathFactory.Type.Jump));
+                        bWidget.addAnimation(gv.getBoard().move(m2,PathFactory.Type.Jump));
+                        bWidget.addAnimation(gv.getBoard().move(m3,PathFactory.Type.Jump));
+                        bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
+                            @Override
+                            public void onAnimationDone() {
+                                loop.stop();
+                                Move m1 = new Move(1,0,2,2);
+                                Move m2 = new Move(6,0,4,2);
+                                Move m3 = new Move(1,7,2,5);
+                                Move m4 = new Move(6,7,4,5);
+                                bWidget.addAnimation(gv.getBoard().move(m1,PathFactory.Type.Jump));
+                                bWidget.addAnimation(gv.getBoard().move(m2,PathFactory.Type.Jump));
+                                bWidget.addAnimation(gv.getBoard().move(m3,PathFactory.Type.Jump));
+                                bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
+                                    @Override
+                                    public void onAnimationDone() {
+                                        loop.stop();
+                                        Move m1 = new Move(3,0,3,3);
+                                        Move m2 = new Move(4,0,4,3);
+                                        Move m3 = new Move(3,7,3,4);
+                                        Move m4 = new Move(4,7,4,4);
+                                        bWidget.addAnimation(gv.getBoard().move(m1,PathFactory.Type.Jump));
+                                        bWidget.addAnimation(gv.getBoard().move(m2,PathFactory.Type.Jump));
+                                        bWidget.addAnimation(gv.getBoard().move(m3,PathFactory.Type.Jump));
+                                        bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
+                                            @Override
+                                            public void onAnimationDone() {
+                                                loop.stop();
+                                                //loop.setSpeed(100);
+                                                Move m1 = new Move(3,3,1,3);
+                                                Move m2 = new Move(4,3,6,3);
+                                                Move m3 = new Move(3,4,1,4);
+                                                Move m4 = new Move(4,4,6,4);
+                                                bWidget.addAnimation(gv.getBoard().move(m1,PathFactory.Type.Linear));
+                                                bWidget.addAnimation(gv.getBoard().move(m2,PathFactory.Type.Linear));
+                                                bWidget.addAnimation(gv.getBoard().move(m3,PathFactory.Type.Linear));
+                                                bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Linear), new AnimationDoneListener() {
+                                                    @Override
+                                                    public void onAnimationDone() {
+                                                        gv.addStageWidget();
+                                                        rotate(gv,bWidget);
+                                                    }
+                                                });
+                                                loop.start();
+                                            }
+                                        });
+                                        loop.start();
+                                    }
+                                });
+                                loop.start();
+                            }
+                        });
+                        loop.start();
+                    }
+                });
+                loop.start();
+            }
+        });
+        loop.start();
+    }
+
+    private void rotate(GameView gv, DrawableGameWidget bWidget) {
+        loop.stop();
+        //loop.setSpeed(100);
+        Move m1 = new Move(1,2,1,3);
+        Move m2 = new Move(1,3,1,4);
+        Move m3 = new Move(1,4,1,5);
+        Move m4 = new Move(1,5,2,5);
+        Move m5 = new Move(2,5,3,5);
+        Move m6 = new Move(3,5,4,5);
+        Move m7 = new Move(4,5,5,5);
+        Move m8 = new Move(5,5,6,5);
+        Move m9 = new Move(6,5,6,4);
+        Move m10 = new Move(6,4,6,3);
+        Move m11 = new Move(6,3,6,2);
+        Move m12 = new Move(6,2,5,2);
+        Move m13 = new Move(5,2,4,2);
+        Move m14 = new Move(4,2,3,2);
+        Move m15 = new Move(3,2,2,2);
+        Move m16 = new Move(2,2,1,2);
+
+        bWidget.addAnimation(gv.getBoard().move(m1,PathFactory.Type.Linear));
+        bWidget.addAnimation(gv.getBoard().move(m2,PathFactory.Type.Linear));
+        bWidget.addAnimation(gv.getBoard().move(m3,PathFactory.Type.Linear));
+        bWidget.addAnimation(gv.getBoard().move(m4,PathFactory.Type.Linear));
+        bWidget.addAnimation(gv.getBoard().move(m5,PathFactory.Type.Linear));
+        bWidget.addAnimation(gv.getBoard().move(m6,PathFactory.Type.Linear));
+        bWidget.addAnimation(gv.getBoard().move(m7,PathFactory.Type.Linear));
+        bWidget.addAnimation(gv.getBoard().move(m8,PathFactory.Type.Linear));
+        bWidget.addAnimation(gv.getBoard().move(m9,PathFactory.Type.Linear));
+        bWidget.addAnimation(gv.getBoard().move(m10,PathFactory.Type.Linear));
+        bWidget.addAnimation(gv.getBoard().move(m11,PathFactory.Type.Linear));
+        bWidget.addAnimation(gv.getBoard().move(m12,PathFactory.Type.Linear));
+        bWidget.addAnimation(gv.getBoard().move(m13,PathFactory.Type.Linear));
+        bWidget.addAnimation(gv.getBoard().move(m14,PathFactory.Type.Linear));
+        bWidget.addAnimation(gv.getBoard().move(m15,PathFactory.Type.Linear));
+        bWidget.addAnimation(gv.getBoard().move(m16, PathFactory.Type.Linear), new AnimationDoneListener() {
+            @Override
+            public void onAnimationDone() {
+                rotate(gv,bWidget);
+            }
+        });
+        loop.start();
     }
 }

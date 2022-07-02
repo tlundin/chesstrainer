@@ -9,9 +9,12 @@ import java.util.Locale;
 
 public class Tools {
 
-	
-	
-	public static class PersistenceHelper {
+
+    public static User getUser() {
+		return new User();
+    }
+
+    public static class PersistenceHelper {
 		public static final String UNDEFINED = "";
 		SharedPreferences sp;
 		public PersistenceHelper(Context ctx) {
