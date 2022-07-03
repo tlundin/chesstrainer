@@ -21,15 +21,18 @@ public class SceneLoop {
                     t1 = System.currentTimeMillis();
                     if (!stopped.get()) {
                         c = gc.sh.lockCanvas();
-                        scene.getWidgets().forEach(gw ->  {
-                            c.save();
-                            c.translate(0, gw.getOffset());
-                            gw.stepAnimate();
-                            gw.draw(c);
-                            c.restore();
-                        });
-
-                        gc.sh.unlockCanvasAndPost(c);
+                        if (c == null)
+                            SceneLoop.this.kill();
+                        else {
+                            scene.getWidgets().forEach(gw -> {
+                                c.save();
+                                c.translate(0, gw.getOffset());
+                                gw.stepAnimate();
+                                gw.draw(c);
+                                c.restore();
+                            });
+                            gc.sh.unlockCanvasAndPost(c);
+                        }
                     }
                         diff = System.currentTimeMillis() - t1;
                         if (diff < FRAME_RATE) {

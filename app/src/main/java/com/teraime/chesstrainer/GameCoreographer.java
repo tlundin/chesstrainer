@@ -128,6 +128,9 @@ public class GameCoreographer implements SceneContext, GameWidget {
         DrawableGameWidget dgw = new DrawableGameWidget(this,0);
         mWidgets.add(dgw);
         mDrawableAspect = dgw;
+        p.setShader(mShader);
+        p.setAntiAlias(true);
+        p.setDither(true);
     }
 
 
@@ -316,7 +319,6 @@ public class GameCoreographer implements SceneContext, GameWidget {
 
     @Override
     public void draw(Canvas c) {
-        p.setShader(mShader);
         c.drawRect(bg,p);
         if (orbC == 0)
             c.drawBitmap(logo, c.getWidth() / 2-logo.getWidth()/2, c.getWidth() / 2 -logo.getHeight()/2, p2);

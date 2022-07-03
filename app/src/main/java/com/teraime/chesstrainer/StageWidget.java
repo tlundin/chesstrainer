@@ -40,8 +40,8 @@ public class StageWidget implements GameWidget {
         p3 = new Paint();
 
         //background
-        p.setStyle(Paint.Style.FILL_AND_STROKE);
-        p.setColor(Color.WHITE);
+        p.setStyle(Paint.Style.FILL);
+        p.setColor(Color.DKGRAY);
         p.setAlpha(200);
 
         //rect
@@ -94,15 +94,13 @@ public class StageWidget implements GameWidget {
         c.drawBitmap(stageBmp,null,txtRect,p4);
         int std=stage;
         int stdH = std/100;
-        if (stdH>0) {
-            c.drawBitmap(getNumberBmp(stdH), null, numRectOne, p4);
+        c.drawBitmap(getNumberBmp(stdH), null, numRectOne, p4);
+        if (stdH>0)
             std = (std - stdH*100);
-        }
         int stdT = std/10;
-        if (stdT>0) {
-            c.drawBitmap(getNumberBmp(stdT), null, numRectTwo, p4);
+        c.drawBitmap(getNumberBmp(stdT), null, numRectTwo, p4);
+        if (stdT>0)
             std = (std - 10*stdT);
-        }
         c.drawBitmap(getNumberBmp(std),null,numRectThree,p4);
     }
 

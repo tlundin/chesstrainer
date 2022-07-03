@@ -17,7 +17,7 @@ public class User {
                     .put("RATING", "1500")
                     .toString();
             name = "Terje";
-            stage = Integer.parseInt("10");
+            stage = Integer.parseInt("1");
         } catch (JSONException e) {
             e.printStackTrace();
         }

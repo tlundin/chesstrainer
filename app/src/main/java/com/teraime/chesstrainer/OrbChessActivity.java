@@ -106,7 +106,10 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager 
                                       @Override
                                       public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
                                           mGameContext = GameContext.create(context,surfaceHolder,OrbChessActivity.this);
-                                          loop = new SceneLoop(mGameContext,new GameCoreographer(mGameContext,binding));
+                                          GameCoreographer gameIntro = new GameCoreographer(mGameContext,binding);
+                                          loop = new SceneLoop(mGameContext,gameIntro);
+                                          if (gameIntro.newPlayer)
+                                              GameContext.tp.submit(new LevelGenerator());
                                           loop.start();
                                       }
 
