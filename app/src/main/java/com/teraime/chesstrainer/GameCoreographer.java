@@ -206,7 +206,23 @@ public class GameCoreographer implements SceneContext, GameWidget {
                             easyTxt.setVisibility(View.GONE);
                             normalTxt.setVisibility(View.GONE);
                             hardTxt.setVisibility(View.GONE);
-                            exit();
+                            mDrawableAspect.addAnimation(shrink(), new AnimationDoneListener() {
+                                @Override
+                                public void onAnimationDone() {
+                                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            try {
+                                                Thread.sleep(2000);
+                                            } catch (InterruptedException e) {
+                                                e.printStackTrace();
+                                            }
+                                            startButton.setVisibility(View.GONE);
+                                        }
+                                    });
+                                    gc.sceneDone();
+                                }});
+                            mDrawableAspect.addAnimation(move());
                         }
                     }
                 }
@@ -216,20 +232,6 @@ public class GameCoreographer implements SceneContext, GameWidget {
 
     }
 
-    private void exit() {
-        mDrawableAspect.addAnimation(shrink(), new AnimationDoneListener() {
-            @Override
-            public void onAnimationDone() {
-                new Handler(Looper.getMainLooper()).post(new Runnable() {
-                    @Override
-                    public void run() {
-                        startButton.setVisibility(View.GONE);
-                    }
-                });
-                gc.sceneDone();
-            }});
-        mDrawableAspect.addAnimation(move());
-    }
 
     private void enableEntry(boolean newPlayer) {
         startButton.setBackgroundResource(R.drawable.buttonfade);
@@ -249,13 +251,16 @@ public class GameCoreographer implements SceneContext, GameWidget {
                         startButton.setImageBitmap(pressed);
                         break;
                     case MotionEvent.ACTION_UP:
-                        startButton.setImageBitmap(on);
+                        startButton.setOnTouchListener(null);
                         if (newPlayer) {
+                            startButton.setImageBitmap(on);
                             easyT.setVisibility(View.GONE);
                             fade(0, 500);
-                        } else
-                            exit();
-                        startButton.setOnTouchListener(null);
+                        } else {
+                            startButton.setVisibility(View.GONE);
+                            gc.sceneDone();
+                        }
+
                         break;
                 }
                 return false;

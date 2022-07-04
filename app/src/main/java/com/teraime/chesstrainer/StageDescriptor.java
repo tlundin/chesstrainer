@@ -1,21 +1,17 @@
 package com.teraime.chesstrainer;
 
+import java.util.Map;
+
 public class StageDescriptor {
 
-    int stage;
-    String stageText;
-    enum StageType {
-        normal,
-        not_normal
-    };
+    final int stage;
+    final String stageText;
+    final Map<Integer,Puzzle> levelMap;
 
-    public StageDescriptor(int stage, String stageText) {
+    public StageDescriptor(int stage, String stageText,Map<Integer,Puzzle> levelMap) {
         this.stage = stage;
         this.stageText = stageText;
-        switch (stage) {
-            case 1:
-
-        }
+        this.levelMap = levelMap;
 
     }
 }

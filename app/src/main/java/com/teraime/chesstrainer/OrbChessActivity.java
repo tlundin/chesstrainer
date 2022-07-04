@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -24,15 +25,14 @@ import android.widget.TextView;
 import com.teraime.chesstrainer.databinding.ActivityFullscreenBinding;
 
 import java.io.IOException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class OrbChessActivity extends AppCompatActivity implements SceneManager {
+public class OrbChessActivity extends AppCompatActivity implements SceneManager, DoneCallback {
 
     private static final boolean AUTO_HIDE = true;
     private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
@@ -84,6 +84,7 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager 
      */
 
     private ActivityFullscreenBinding binding;
+    private View.OnTouchListener mListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,12 +107,11 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager 
         surfaceHolder.addCallback(new SurfaceHolder.Callback() {
                                       @Override
                                       public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-                                          mGameContext = GameContext.create(context,surfaceHolder,OrbChessActivity.this);
+                                          mGameContext = GameContext.create(Tools.getUser(),context,surfaceHolder,OrbChessActivity.this);
                                           GameCoreographer gameIntro = new GameCoreographer(mGameContext,binding);
                                           loop = new SceneLoop(mGameContext,gameIntro);
-                                          //if (gameIntro.newPlayer)
-                                          StageGenerator stageGenerator = new StageGenerator(myDBH,Tools.getUser());
-                                          GameContext.tp.execute(stageGenerator);
+                                          StageGenerator stageGenerator = new StageGenerator(myDBH,mGameContext,OrbChessActivity.this);
+                                          GameContext.threadExecutorPool.execute(stageGenerator);
                                           loop.start();
                                       }
 
@@ -146,6 +146,14 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager 
                // game.onResetClick();
             }
         });
+        mContentView.setOnTouchListener(new View.OnTouchListener() {
+                                            @Override
+                                            public boolean onTouch(View v, MotionEvent event) {
+                                                if (mListener != null)
+                                                    mListener.onTouch(v,event);
+                                                return false;
+                                            }
+                                        });
         createDB();
     }
 
@@ -223,140 +231,165 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager 
         return myDBH;
     }
 
+    AtomicBoolean initDone = new AtomicBoolean(false);
+    AtomicBoolean sceneDone = new AtomicBoolean(false);
     @Override
     public void onSceneDone() {
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        loop.kill();
-        GameView gv = new GameView(this,myDBH,scoreT,endB);
-        loop = new SceneLoop(mGameContext,gv);
-        gv.getBoard().setFade(0);
-        DrawableGameWidget bWidget = gv.getBoardWidget();
-        bWidget.addAnimation(gv.getBoard().fadeBoard(1, 2000), new AnimationDoneListener() {
-            @Override
-            public void onAnimationDone() {
-                loop.stop();
-                Move m1 = new Move(0,0,1,2);
-                Move m2 = new Move(7,0,6,2);
-                Move m3 = new Move(0,7,1,5);
-                Move m4 = new Move(7,7,6,5);
-                bWidget.addAnimation(gv.getBoard().move(m1,PathFactory.Type.Jump));
-                bWidget.addAnimation(gv.getBoard().move(m2,PathFactory.Type.Jump));
-                bWidget.addAnimation(gv.getBoard().move(m3,PathFactory.Type.Jump));
-                bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
-                    @Override
-                    public void onAnimationDone() {
-                        loop.stop();
-                        Move m1 = new Move(2,0,3,2);
-                        Move m2 = new Move(5,0,5,2);
-                        Move m3 = new Move(2,7,3,5);
-                        Move m4 = new Move(5,7,5,5);
-                        bWidget.addAnimation(gv.getBoard().move(m1,PathFactory.Type.Jump));
-                        bWidget.addAnimation(gv.getBoard().move(m2,PathFactory.Type.Jump));
-                        bWidget.addAnimation(gv.getBoard().move(m3,PathFactory.Type.Jump));
-                        bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
-                            @Override
-                            public void onAnimationDone() {
-                                loop.stop();
-                                Move m1 = new Move(1,0,2,2);
-                                Move m2 = new Move(6,0,4,2);
-                                Move m3 = new Move(1,7,2,5);
-                                Move m4 = new Move(6,7,4,5);
-                                bWidget.addAnimation(gv.getBoard().move(m1,PathFactory.Type.Jump));
-                                bWidget.addAnimation(gv.getBoard().move(m2,PathFactory.Type.Jump));
-                                bWidget.addAnimation(gv.getBoard().move(m3,PathFactory.Type.Jump));
-                                bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
-                                    @Override
-                                    public void onAnimationDone() {
-                                        loop.stop();
-                                        Move m1 = new Move(3,0,3,3);
-                                        Move m2 = new Move(4,0,4,3);
-                                        Move m3 = new Move(3,7,3,4);
-                                        Move m4 = new Move(4,7,4,4);
-                                        bWidget.addAnimation(gv.getBoard().move(m1,PathFactory.Type.Jump));
-                                        bWidget.addAnimation(gv.getBoard().move(m2,PathFactory.Type.Jump));
-                                        bWidget.addAnimation(gv.getBoard().move(m3,PathFactory.Type.Jump));
-                                        bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
-                                            @Override
-                                            public void onAnimationDone() {
-                                                loop.stop();
-                                                //loop.setSpeed(100);
-                                                Move m1 = new Move(3,3,1,3);
-                                                Move m2 = new Move(4,3,6,3);
-                                                Move m3 = new Move(3,4,1,4);
-                                                Move m4 = new Move(4,4,6,4);
-                                                bWidget.addAnimation(gv.getBoard().move(m1,PathFactory.Type.Linear));
-                                                bWidget.addAnimation(gv.getBoard().move(m2,PathFactory.Type.Linear));
-                                                bWidget.addAnimation(gv.getBoard().move(m3,PathFactory.Type.Linear));
-                                                bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Linear), new AnimationDoneListener() {
-                                                    @Override
-                                                    public void onAnimationDone() {
-                                                        gv.addStageWidget();
-                                                        rotate(gv,bWidget);
-                                                    }
-                                                });
-                                                loop.start();
-                                            }
-                                        });
-                                        loop.start();
-                                    }
-                                });
-                                loop.start();
-                            }
-                        });
-                        loop.start();
-                    }
-                });
-                loop.start();
-            }
-        });
-        loop.start();
+        sceneDone.set(true);
+        start();
     }
 
-    private void rotate(GameView gv, DrawableGameWidget bWidget) {
-        loop.stop();
-        //loop.setSpeed(100);
-        Move m1 = new Move(1,2,1,3);
-        Move m2 = new Move(1,3,1,4);
-        Move m3 = new Move(1,4,1,5);
-        Move m4 = new Move(1,5,2,5);
-        Move m5 = new Move(2,5,3,5);
-        Move m6 = new Move(3,5,4,5);
-        Move m7 = new Move(4,5,5,5);
-        Move m8 = new Move(5,5,6,5);
-        Move m9 = new Move(6,5,6,4);
-        Move m10 = new Move(6,4,6,3);
-        Move m11 = new Move(6,3,6,2);
-        Move m12 = new Move(6,2,5,2);
-        Move m13 = new Move(5,2,4,2);
-        Move m14 = new Move(4,2,3,2);
-        Move m15 = new Move(3,2,2,2);
-        Move m16 = new Move(2,2,1,2);
+    public void start() {
+        //if new player, call made after init. Otherwise, call after animation.
+        if (initDone.get() && sceneDone.get()) {
+            sceneDone.set(false);
 
-        bWidget.addAnimation(gv.getBoard().move(m1,PathFactory.Type.Linear));
-        bWidget.addAnimation(gv.getBoard().move(m2,PathFactory.Type.Linear));
-        bWidget.addAnimation(gv.getBoard().move(m3,PathFactory.Type.Linear));
-        bWidget.addAnimation(gv.getBoard().move(m4,PathFactory.Type.Linear));
-        bWidget.addAnimation(gv.getBoard().move(m5,PathFactory.Type.Linear));
-        bWidget.addAnimation(gv.getBoard().move(m6,PathFactory.Type.Linear));
-        bWidget.addAnimation(gv.getBoard().move(m7,PathFactory.Type.Linear));
-        bWidget.addAnimation(gv.getBoard().move(m8,PathFactory.Type.Linear));
-        bWidget.addAnimation(gv.getBoard().move(m9,PathFactory.Type.Linear));
-        bWidget.addAnimation(gv.getBoard().move(m10,PathFactory.Type.Linear));
-        bWidget.addAnimation(gv.getBoard().move(m11,PathFactory.Type.Linear));
-        bWidget.addAnimation(gv.getBoard().move(m12,PathFactory.Type.Linear));
-        bWidget.addAnimation(gv.getBoard().move(m13,PathFactory.Type.Linear));
-        bWidget.addAnimation(gv.getBoard().move(m14,PathFactory.Type.Linear));
-        bWidget.addAnimation(gv.getBoard().move(m15,PathFactory.Type.Linear));
-        bWidget.addAnimation(gv.getBoard().move(m16, PathFactory.Type.Linear), new AnimationDoneListener() {
-            @Override
-            public void onAnimationDone() {
-                rotate(gv,bWidget);
-            }
+            loop.kill();
+            GameView gv = new GameView(this, myDBH, scoreT, endB);
+            loop = new SceneLoop(mGameContext, gv);
+            gv.getBoard().setFade(0);
+            DrawableGameWidget bWidget = gv.getBoardWidget();
+            bWidget.addAnimation(gv.getBoard().fadeBoard(1, 2000), new AnimationDoneListener() {
+                @Override
+                public void onAnimationDone() {
+                    loop.stop();
+                    Move m1 = new Move(0, 0, 1, 2);
+                    Move m2 = new Move(7, 0, 6, 2);
+                    Move m3 = new Move(0, 7, 1, 5);
+                    Move m4 = new Move(7, 7, 6, 5);
+                    bWidget.addAnimation(gv.getBoard().move(m1, PathFactory.Type.Jump));
+                    bWidget.addAnimation(gv.getBoard().move(m2, PathFactory.Type.Jump));
+                    bWidget.addAnimation(gv.getBoard().move(m3, PathFactory.Type.Jump));
+                    bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
+                        @Override
+                        public void onAnimationDone() {
+                            loop.stop();
+                            Move m1 = new Move(2, 0, 3, 2);
+                            Move m2 = new Move(5, 0, 5, 2);
+                            Move m3 = new Move(2, 7, 3, 5);
+                            Move m4 = new Move(5, 7, 5, 5);
+                            bWidget.addAnimation(gv.getBoard().move(m1, PathFactory.Type.Jump));
+                            bWidget.addAnimation(gv.getBoard().move(m2, PathFactory.Type.Jump));
+                            bWidget.addAnimation(gv.getBoard().move(m3, PathFactory.Type.Jump));
+                            bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
+                                @Override
+                                public void onAnimationDone() {
+                                    loop.stop();
+                                    Move m1 = new Move(1, 0, 2, 2);
+                                    Move m2 = new Move(6, 0, 4, 2);
+                                    Move m3 = new Move(1, 7, 2, 5);
+                                    Move m4 = new Move(6, 7, 4, 5);
+                                    bWidget.addAnimation(gv.getBoard().move(m1, PathFactory.Type.Jump));
+                                    bWidget.addAnimation(gv.getBoard().move(m2, PathFactory.Type.Jump));
+                                    bWidget.addAnimation(gv.getBoard().move(m3, PathFactory.Type.Jump));
+                                    bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
+                                        @Override
+                                        public void onAnimationDone() {
+                                            loop.stop();
+                                            Move m1 = new Move(3, 0, 3, 3);
+                                            Move m2 = new Move(4, 0, 4, 3);
+                                            Move m3 = new Move(3, 7, 3, 4);
+                                            Move m4 = new Move(4, 7, 4, 4);
+                                            bWidget.addAnimation(gv.getBoard().move(m1, PathFactory.Type.Jump));
+                                            bWidget.addAnimation(gv.getBoard().move(m2, PathFactory.Type.Jump));
+                                            bWidget.addAnimation(gv.getBoard().move(m3, PathFactory.Type.Jump));
+                                            bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
+                                                @Override
+                                                public void onAnimationDone() {
+                                                    loop.stop();
+                                                    //loop.setSpeed(100);
+                                                    Move m1 = new Move(3, 3, 1, 3);
+                                                    Move m2 = new Move(4, 3, 6, 3);
+                                                    Move m3 = new Move(3, 4, 1, 4);
+                                                    Move m4 = new Move(4, 4, 6, 4);
+                                                    bWidget.addAnimation(gv.getBoard().move(m1, PathFactory.Type.Linear));
+                                                    bWidget.addAnimation(gv.getBoard().move(m2, PathFactory.Type.Linear));
+                                                    bWidget.addAnimation(gv.getBoard().move(m3, PathFactory.Type.Linear));
+                                                    bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Linear), new AnimationDoneListener() {
+                                                        @Override
+                                                        public void onAnimationDone() {
+                                                            gv.addStageWidget();
+                                                            rotate(gv, bWidget);
+                                                        }
+                                                    });
+                                                    loop.start();
+                                                }
+                                            });
+                                            loop.start();
+                                        }
+                                    });
+                                    loop.start();
+                                }
+                            });
+                            loop.start();
+                        }
+                    });
+                    loop.start();
+                }
+            });
+            loop.start();
+        }
+    }
+
+    private void rotate(GameView gv, DrawableGameWidget bWidget){
+            loop.stop();
+            //loop.setSpeed(100);
+            Move m1 = new Move(1, 2, 1, 3);
+            Move m2 = new Move(1, 3, 1, 4);
+            Move m3 = new Move(1, 4, 1, 5);
+            Move m4 = new Move(1, 5, 2, 5);
+            Move m5 = new Move(2, 5, 3, 5);
+            Move m6 = new Move(3, 5, 4, 5);
+            Move m7 = new Move(4, 5, 5, 5);
+            Move m8 = new Move(5, 5, 6, 5);
+            Move m9 = new Move(6, 5, 6, 4);
+            Move m10 = new Move(6, 4, 6, 3);
+            Move m11 = new Move(6, 3, 6, 2);
+            Move m12 = new Move(6, 2, 5, 2);
+            Move m13 = new Move(5, 2, 4, 2);
+            Move m14 = new Move(4, 2, 3, 2);
+            Move m15 = new Move(3, 2, 2, 2);
+            Move m16 = new Move(2, 2, 1, 2);
+
+            bWidget.addAnimation(gv.getBoard().move(m1, PathFactory.Type.Linear));
+            bWidget.addAnimation(gv.getBoard().move(m2, PathFactory.Type.Linear));
+            bWidget.addAnimation(gv.getBoard().move(m3, PathFactory.Type.Linear));
+            bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Linear));
+            bWidget.addAnimation(gv.getBoard().move(m5, PathFactory.Type.Linear));
+            bWidget.addAnimation(gv.getBoard().move(m6, PathFactory.Type.Linear));
+            bWidget.addAnimation(gv.getBoard().move(m7, PathFactory.Type.Linear));
+            bWidget.addAnimation(gv.getBoard().move(m8, PathFactory.Type.Linear));
+            bWidget.addAnimation(gv.getBoard().move(m9, PathFactory.Type.Linear));
+            bWidget.addAnimation(gv.getBoard().move(m10, PathFactory.Type.Linear));
+            bWidget.addAnimation(gv.getBoard().move(m11, PathFactory.Type.Linear));
+            bWidget.addAnimation(gv.getBoard().move(m12, PathFactory.Type.Linear));
+            bWidget.addAnimation(gv.getBoard().move(m13, PathFactory.Type.Linear));
+            bWidget.addAnimation(gv.getBoard().move(m14, PathFactory.Type.Linear));
+            bWidget.addAnimation(gv.getBoard().move(m15, PathFactory.Type.Linear));
+            bWidget.addAnimation(gv.getBoard().move(m16, PathFactory.Type.Linear), new AnimationDoneListener() {
+                @Override
+                public void onAnimationDone() {
+                    rotate(gv, bWidget);
+                }
+            });
+            loop.start();
+
+    }
+
+    @Override
+    public void done() {
+        StageDescriptor x = StageDescriptorFactory.getStageDescriptor(1);
+        Map<Integer, Puzzle> y = x.levelMap;
+        y.forEach((k,v)->{
+            Log.d("v",""+k+" TYPE "+v.puzzleType);
         });
-        loop.start();
+        initDone.set(true);
+        start();
+    }
+
+
+    @Override
+    public void registerClickListener(View.OnTouchListener listener) {
+        mListener = listener;
     }
 }

@@ -3,7 +3,6 @@ package com.teraime.chesstrainer;
 import android.graphics.Canvas;
 import android.util.Log;
 
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SceneLoop {
@@ -56,7 +55,7 @@ public class SceneLoop {
         stopped.set(false);
         if (!alive.get()) {
             alive.set(true);
-            GameContext.tp.execute(mLoop);
+            GameContext.threadExecutorPool.execute(mLoop);
         }
     }
     public void kill() {

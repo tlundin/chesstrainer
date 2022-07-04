@@ -3,7 +3,7 @@ package com.teraime.chesstrainer;
 public abstract class Types {
 
 	
-	 public static class MatePuzzle {
+	 public static class MatePuzzle extends Puzzle {
 
 		 public boolean whiteToMove;
 		 public String moves,fen;
@@ -12,13 +12,14 @@ public abstract class Types {
 			 this.whiteToMove=whiteToMove;
 			 this.moves = moves;
 			 this.fen = fen;
+			 this.puzzleType = PuzzleType.MATE;
 		 }
 		 
 	}
 	 
 
 
-	public static class TacticProblem {
+	public static class TacticProblem extends Puzzle {
 
 
 		 public float rd;
@@ -43,9 +44,7 @@ public abstract class Types {
 
 	 
 
-	public static enum ProblemType {
-		TACTICS,GAME,
-	}
+
 	
 	
 	

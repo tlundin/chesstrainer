@@ -12,8 +12,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class MySQLiteHelper extends SQLiteOpenHelper {
@@ -112,7 +115,7 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
 		int rd, rating;
 		String board,moves,tmp;
 		boolean whiteToMove;
-		c = db.rawQuery("SELECT * from tactic WHERE rating >"+minRating+" AND rating <"+maxRating+" ORDER BY rating", null);
+		c = db.rawQuery("SELECT * from tactic WHERE rating > "+minRating+" AND rating < "+maxRating+" ORDER BY RANDOM()", null);
 		c.moveToFirst();
 		while(!c.isAfterLast()) {
 			rd = c.getInt(1);
@@ -126,6 +129,7 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
 			ret.add(new Types.TacticProblem(rd, rating, board, moves, whiteToMove, Progressor.Difficulty.normal));
 			c.moveToNext();
 		}
+		c.close();
 		return ret;
 	}
 	public List<Types.TacticProblem> getTacticProblems(int size, int minRating, int maxRating) {
@@ -240,7 +244,35 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
 			return new Types.MatePuzzle(moves,fen,whiteToMove);
 		}
 		return null;
-		
+
+	}
+
+	public Map<Integer,List<Types.MatePuzzle>> getMatePuzzles() {
+		SQLiteDatabase db = this.getReadableDatabase();
+		Map<Integer,List<Types.MatePuzzle>> ret = new HashMap();
+		String moves, fen;
+		boolean whiteToMove;
+
+		for (int nMoves = 2;nMoves<5;nMoves++) {
+			List<Types.MatePuzzle> entryL = new ArrayList<>();
+			ret.put(nMoves,entryL);
+			Cursor c = db.rawQuery("SELECT * from mate WHERE matein =" + nMoves + " ORDER BY RANDOM()", null);
+			c.moveToFirst();
+			while (!c.isAfterLast()) {
+				moves = c.getString(2);
+				fen = c.getString(3);
+				if (moves != null && moves.length() > 0 && fen != null) {
+					whiteToMove = !(moves.startsWith("1.."));
+					entryL.add(new Types.MatePuzzle(moves,fen,whiteToMove));
+				}
+				c.moveToNext();
+			}
+			c.close();
+		}
+		//whiteToMove=true;
+		//moves = "1. Qg7";
+		//fen = "2N2B2/r1p2p2/1P4RQ/3kpP1N/2p3R1/1n6/r1n1P2K/1B6 w - - 0 1]";
+		return ret;
 
 	}
 

@@ -9,12 +9,19 @@ import java.util.Map;
 
 public class StageGenerator implements Runnable {
     List<StageDescriptor> stages;
-    MySQLiteHelper myDBH;
+    final Map<Integer,List<Types.TacticProblem>> ratedProblemMap;
+    Map<Integer,List<Types.MatePuzzle>> matingPuzzleMap;
+    final MySQLiteHelper myDBH;
+    final GameContext gc;
     User user;
+    DoneCallback cb;
 
-    public StageGenerator(MySQLiteHelper myDBH, User user) {
-        this.user = user;
+    public StageGenerator(MySQLiteHelper myDBH,GameContext gameContext, DoneCallback cb) {
         this.myDBH = myDBH;
+        gc = gameContext;
+        user = gc.user;
+        ratedProblemMap = new HashMap<>();
+        this.cb = cb;
     }
 
 
@@ -26,19 +33,15 @@ public class StageGenerator implements Runnable {
         List<Types.TacticProblem> tacticProblems = myDBH.getTacticProblems(min,max);
         Log.d("Robo","rf "+tacticProblems.get(0).rating+" rl "+tacticProblems.get(tacticProblems.size()-1).rating);
         int increment = 100;
-        Map<Integer,List> ratedProblemMap = new HashMap();
         tacticProblems.forEach(problem-> {
             int slot = (int) (problem.rating/100);
-            List l = ratedProblemMap.get(slot);
-            if (l == null) {
-                l = new ArrayList<Types.TacticProblem>();
-                ratedProblemMap.put(slot, l);
-            }
+            List<Types.TacticProblem> l = ratedProblemMap.computeIfAbsent(slot, k -> new ArrayList<>());
             l.add(problem);
         });
-        //ratedProblemMap.forEach((key,value) -> {
-        //    Log.d("v","n "+key+" "+value.size()+" "+((Types.TacticProblem)value.get(0)).rating);
-        //});
-        //StageDescriptorFactory.getStageDescriptor(1,u.);
+
+        matingPuzzleMap = myDBH.getMatePuzzles();
+        matingPuzzleMap.forEach((k,v)->Log.d("mate","Mate in "+k+" Probsize: "+v.size()));
+        gc.setPuzzles(ratedProblemMap,matingPuzzleMap);
+        cb.done();
     }
 }
