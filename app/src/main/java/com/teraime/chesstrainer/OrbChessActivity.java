@@ -25,6 +25,7 @@ import com.teraime.chesstrainer.databinding.ActivityFullscreenBinding;
 
 import java.io.IOException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -108,8 +109,9 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager 
                                           mGameContext = GameContext.create(context,surfaceHolder,OrbChessActivity.this);
                                           GameCoreographer gameIntro = new GameCoreographer(mGameContext,binding);
                                           loop = new SceneLoop(mGameContext,gameIntro);
-                                          if (gameIntro.newPlayer)
-                                              GameContext.tp.submit(new LevelGenerator());
+                                          //if (gameIntro.newPlayer)
+                                          StageGenerator stageGenerator = new StageGenerator(myDBH,Tools.getUser());
+                                          GameContext.tp.execute(stageGenerator);
                                           loop.start();
                                       }
 
@@ -144,7 +146,7 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager 
                // game.onResetClick();
             }
         });
-
+        createDB();
     }
 
 
@@ -229,7 +231,7 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager 
             e.printStackTrace();
         }
         loop.kill();
-        GameView gv = new GameView(this,createDB(),scoreT,endB);
+        GameView gv = new GameView(this,myDBH,scoreT,endB);
         loop = new SceneLoop(mGameContext,gv);
         gv.getBoard().setFade(0);
         DrawableGameWidget bWidget = gv.getBoardWidget();

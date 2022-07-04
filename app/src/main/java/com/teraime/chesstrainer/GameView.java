@@ -270,7 +270,7 @@ public class GameView implements SceneContext, View.OnClickListener, View.OnTouc
     List<Types.TacticProblem> mTacticProblems;
     public void onTestClick() {
         db.openDataBase();
-        mTacticProblems = db.getTacticProblems(500,800);
+        mTacticProblems = db.getTacticProblems(500,800,-1);
         db.close();
         onTactic();
     }

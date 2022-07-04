@@ -103,6 +103,7 @@ public class GameCoreographer implements SceneContext, GameWidget {
         User user = Tools.getUser();
         if (false) {//playerName.equals(Tools.PersistenceHelper.UNDEFINED)) {
             Log.d("v", "new player");
+            newPlayer = true;
             handler.post(new Runnable() {
                 @Override
                 public void run() {

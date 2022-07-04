@@ -8,6 +8,7 @@ public class User {
     String raw;
     String name;
     int stage;
+    int rating;
 
     public User() {
         try {
@@ -18,6 +19,7 @@ public class User {
                     .toString();
             name = "Terje";
             stage = Integer.parseInt("1");
+            rating = 1600;
         } catch (JSONException e) {
             e.printStackTrace();
         }

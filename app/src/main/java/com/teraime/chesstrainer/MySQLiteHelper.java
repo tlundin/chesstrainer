@@ -104,8 +104,29 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
 		return new Types.TacticProblem(rd,rating,board,moves,whiteToMove, Progressor.Difficulty.normal);
 
 	}
-	public List<Types.TacticProblem> getTacticProblems(int size, int minRating) {
-		return getTacticProblems(size,minRating,-1);
+
+	public List<Types.TacticProblem> getTacticProblems(int minRating, int maxRating) {
+		List<Types.TacticProblem> ret = new LinkedList<Types.TacticProblem>();
+		SQLiteDatabase db = this.getReadableDatabase();
+		Cursor c;
+		int rd, rating;
+		String board,moves,tmp;
+		boolean whiteToMove;
+		c = db.rawQuery("SELECT * from tactic WHERE rating >"+minRating+" AND rating <"+maxRating+" ORDER BY rating", null);
+		c.moveToFirst();
+		while(!c.isAfterLast()) {
+			rd = c.getInt(1);
+			rating = c.getInt(2);
+			board = c.getString(3);
+			moves = c.getString(4);
+			tmp = c.getString(5);
+			whiteToMove = false;
+			if (tmp != null && tmp.equals("w"))
+				whiteToMove = true;
+			ret.add(new Types.TacticProblem(rd, rating, board, moves, whiteToMove, Progressor.Difficulty.normal));
+			c.moveToNext();
+		}
+		return ret;
 	}
 	public List<Types.TacticProblem> getTacticProblems(int size, int minRating, int maxRating) {
 		//openDataBase();
