@@ -41,7 +41,7 @@ public class Board implements GameWidget
     private int boardOffset;
     final float centerX,centerY;
     private Cord okLocation;
-    private boolean dragActive = false, moveActive = false;
+    private boolean dragActive = false;
 
     public Board(Context context, ScaleOptions scaleOption, StyleOptions boardStyle, StyleOptions pieceStyle, int size_with_borders, int bo) {
         int _size = scale(size_with_borders,scaleOption);
@@ -253,18 +253,15 @@ public class Board implements GameWidget
         Cord movingPieceInitialPosition = move.getFromCord();
         final Point movingPiecePosition = calculateXYFromGrid(move.getFromColumn(), move.getFromRow());
         final Point movingPieceDestination = calculateXYFromGrid(move.getToColumn(), move.getToRow());
-        int movingPieceId = mPosition.get(move.getFromColumn(), move.getFromRow());
+        final int movingPieceId = mPosition.get(move.getFromColumn(), move.getFromRow());
         //movingPieceBmp = pieceBox[movingPieceId];
-        int squareSize = getSquareSize();
-        MoveVector vect = PathFactory.generate(type, movingPiecePosition, movingPieceDestination);
-        Point[] pointsOnTheWay = vect.mPoints;
-        float[] scale = vect.mScale;
+        final MoveVector vect = PathFactory.generate(type, movingPiecePosition, movingPieceDestination);
+        final Point[] pointsOnTheWay = vect.mPoints;
         final Rect moveRect = pieceSquares[8*move.getFromRow()+move.getFromColumn()];
         final float width = moveRect.width();
         final float height = moveRect.height();
         final Rect startP = new Rect(moveRect);
 
-        moveActive = true;
         return new GameAnimation() {
             int count = 0;
             boolean done = false;
@@ -278,7 +275,6 @@ public class Board implements GameWidget
                 count++;
                 if (count == pointsOnTheWay.length) {
                     dropMovingPiece(movingPieceInitialPosition,movingPieceDestination, movingPieceId);
-                    moveActive = false;
                     pieceSquares[8*move.getFromRow()+move.getFromColumn()] = startP;
                     done = true;
                 }

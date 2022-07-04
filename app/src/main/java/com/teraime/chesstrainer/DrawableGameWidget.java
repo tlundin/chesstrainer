@@ -43,17 +43,17 @@ class DrawableGameWidget {
         }
 
         public void stepAnimate() {
-                for (GameAnimation gameAnimation:animations) {
+                animations.forEach(gameAnimation ->  {
                         if (gameAnimation.stepAnimate()) {
                                 animations.remove(gameAnimation);
                                 if (animations.isEmpty())
                                         if (!listenerMap.isEmpty()) {
                                                 listenerMap.forEach(listener -> {
-                                                        listener.onAnimationDone();
                                                         listenerMap.remove(listener);
+                                                        listener.onAnimationDone();
                                                 });
                                         }
                         }
-                }
+                });
         }
 }

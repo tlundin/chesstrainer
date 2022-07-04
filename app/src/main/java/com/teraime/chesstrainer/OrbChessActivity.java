@@ -85,6 +85,8 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
 
     private ActivityFullscreenBinding binding;
     private View.OnTouchListener mListener;
+    private GameView gameV;
+    private boolean stageSelected = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,15 +105,19 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
         SurfaceView sf = (SurfaceView)mContentView;
         SurfaceHolder surfaceHolder = sf.getHolder();
         Context context = this;
+        createDB();
+
 
         surfaceHolder.addCallback(new SurfaceHolder.Callback() {
                                       @Override
                                       public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
                                           mGameContext = GameContext.create(Tools.getUser(),context,surfaceHolder,OrbChessActivity.this);
+                                          gameV = new GameView(context, myDBH, scoreT, endB);
                                           GameCoreographer gameIntro = new GameCoreographer(mGameContext,binding);
                                           loop = new SceneLoop(mGameContext,gameIntro);
                                           StageGenerator stageGenerator = new StageGenerator(myDBH,mGameContext,OrbChessActivity.this);
                                           GameContext.threadExecutorPool.execute(stageGenerator);
+
                                           loop.start();
                                       }
 
@@ -151,7 +157,7 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
                 return mListener.onTouch(v,event);
             return false;
         });
-        createDB();
+
     }
 
 
@@ -230,10 +236,24 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
 
     AtomicBoolean initDone = new AtomicBoolean(false);
     AtomicBoolean sceneDone = new AtomicBoolean(false);
+
     @Override
-    public void onSceneDone() {
-        sceneDone.set(true);
-        start();
+    public void onSceneDone(String scene) {
+        if (scene.equals("Intro")) {
+            sceneDone.set(true);
+            start();
+        } else if (scene.equals("StageSelect")) {
+            stageSelected = true;
+            registerClickListener(gameV);
+            loop.stop(new DoneCallback() {
+                          @Override
+                          public void done() {
+                              gameV.removeStageWidget();
+                              loop.start();
+                              gameV.startStage(StageDescriptorFactory.getStageDescriptor(mGameContext.user.stage));
+                          }
+                      });
+        }
     }
 
     public void start() {
@@ -242,11 +262,11 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
             sceneDone.set(false);
 
             loop.kill();
-            GameView gv = new GameView(this, myDBH, scoreT, endB);
-            loop = new SceneLoop(mGameContext, gv);
-            gv.getBoard().setFade(0);
-            DrawableGameWidget bWidget = gv.getBoardWidget();
-            bWidget.addAnimation(gv.getBoard().fadeBoard(1, 2000), new AnimationDoneListener() {
+
+            loop = new SceneLoop(mGameContext, gameV);
+            gameV.getBoard().setFade(0);
+            DrawableGameWidget bWidget = gameV.getBoardWidget();
+            bWidget.addAnimation(gameV.getBoard().fadeBoard(1, 2000), new AnimationDoneListener() {
                 @Override
                 public void onAnimationDone() {
                     loop.stop();
@@ -254,10 +274,10 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
                     Move m2 = new Move(7, 0, 6, 2);
                     Move m3 = new Move(0, 7, 1, 5);
                     Move m4 = new Move(7, 7, 6, 5);
-                    bWidget.addAnimation(gv.getBoard().move(m1, PathFactory.Type.Jump));
-                    bWidget.addAnimation(gv.getBoard().move(m2, PathFactory.Type.Jump));
-                    bWidget.addAnimation(gv.getBoard().move(m3, PathFactory.Type.Jump));
-                    bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
+                    bWidget.addAnimation(gameV.getBoard().move(m1, PathFactory.Type.Jump));
+                    bWidget.addAnimation(gameV.getBoard().move(m2, PathFactory.Type.Jump));
+                    bWidget.addAnimation(gameV.getBoard().move(m3, PathFactory.Type.Jump));
+                    bWidget.addAnimation(gameV.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
                         @Override
                         public void onAnimationDone() {
                             loop.stop();
@@ -265,10 +285,10 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
                             Move m2 = new Move(5, 0, 5, 2);
                             Move m3 = new Move(2, 7, 3, 5);
                             Move m4 = new Move(5, 7, 5, 5);
-                            bWidget.addAnimation(gv.getBoard().move(m1, PathFactory.Type.Jump));
-                            bWidget.addAnimation(gv.getBoard().move(m2, PathFactory.Type.Jump));
-                            bWidget.addAnimation(gv.getBoard().move(m3, PathFactory.Type.Jump));
-                            bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
+                            bWidget.addAnimation(gameV.getBoard().move(m1, PathFactory.Type.Jump));
+                            bWidget.addAnimation(gameV.getBoard().move(m2, PathFactory.Type.Jump));
+                            bWidget.addAnimation(gameV.getBoard().move(m3, PathFactory.Type.Jump));
+                            bWidget.addAnimation(gameV.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
                                 @Override
                                 public void onAnimationDone() {
                                     loop.stop();
@@ -276,10 +296,10 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
                                     Move m2 = new Move(6, 0, 4, 2);
                                     Move m3 = new Move(1, 7, 2, 5);
                                     Move m4 = new Move(6, 7, 4, 5);
-                                    bWidget.addAnimation(gv.getBoard().move(m1, PathFactory.Type.Jump));
-                                    bWidget.addAnimation(gv.getBoard().move(m2, PathFactory.Type.Jump));
-                                    bWidget.addAnimation(gv.getBoard().move(m3, PathFactory.Type.Jump));
-                                    bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
+                                    bWidget.addAnimation(gameV.getBoard().move(m1, PathFactory.Type.Jump));
+                                    bWidget.addAnimation(gameV.getBoard().move(m2, PathFactory.Type.Jump));
+                                    bWidget.addAnimation(gameV.getBoard().move(m3, PathFactory.Type.Jump));
+                                    bWidget.addAnimation(gameV.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
                                         @Override
                                         public void onAnimationDone() {
                                             loop.stop();
@@ -287,10 +307,10 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
                                             Move m2 = new Move(4, 0, 4, 3);
                                             Move m3 = new Move(3, 7, 3, 4);
                                             Move m4 = new Move(4, 7, 4, 4);
-                                            bWidget.addAnimation(gv.getBoard().move(m1, PathFactory.Type.Jump));
-                                            bWidget.addAnimation(gv.getBoard().move(m2, PathFactory.Type.Jump));
-                                            bWidget.addAnimation(gv.getBoard().move(m3, PathFactory.Type.Jump));
-                                            bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
+                                            bWidget.addAnimation(gameV.getBoard().move(m1, PathFactory.Type.Jump));
+                                            bWidget.addAnimation(gameV.getBoard().move(m2, PathFactory.Type.Jump));
+                                            bWidget.addAnimation(gameV.getBoard().move(m3, PathFactory.Type.Jump));
+                                            bWidget.addAnimation(gameV.getBoard().move(m4, PathFactory.Type.Jump), new AnimationDoneListener() {
                                                 @Override
                                                 public void onAnimationDone() {
                                                     loop.stop();
@@ -299,14 +319,15 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
                                                     Move m2 = new Move(4, 3, 6, 3);
                                                     Move m3 = new Move(3, 4, 1, 4);
                                                     Move m4 = new Move(4, 4, 6, 4);
-                                                    bWidget.addAnimation(gv.getBoard().move(m1, PathFactory.Type.Linear));
-                                                    bWidget.addAnimation(gv.getBoard().move(m2, PathFactory.Type.Linear));
-                                                    bWidget.addAnimation(gv.getBoard().move(m3, PathFactory.Type.Linear));
-                                                    bWidget.addAnimation(gv.getBoard().move(m4, PathFactory.Type.Linear), new AnimationDoneListener() {
+                                                    bWidget.addAnimation(gameV.getBoard().move(m1, PathFactory.Type.Linear));
+                                                    bWidget.addAnimation(gameV.getBoard().move(m2, PathFactory.Type.Linear));
+                                                    bWidget.addAnimation(gameV.getBoard().move(m3, PathFactory.Type.Linear));
+                                                    bWidget.addAnimation(gameV.getBoard().move(m4, PathFactory.Type.Linear), new AnimationDoneListener() {
                                                         @Override
                                                         public void onAnimationDone() {
-                                                            gv.addStageWidget();
-                                                            rotate(gv, bWidget);
+                                                            gameV.addStageWidget();
+                                                            stageSelected = false;
+                                                            rotate(gameV, bWidget);
                                                         }
                                                     });
                                                     loop.start();
@@ -366,7 +387,8 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
             bWidget.addAnimation(gv.getBoard().move(m16, PathFactory.Type.Linear), new AnimationDoneListener() {
                 @Override
                 public void onAnimationDone() {
-                    rotate(gv, bWidget);
+                    if (!stageSelected)
+                        rotate(gv, bWidget);
                 }
             });
             loop.start();
@@ -388,5 +410,10 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
     @Override
     public void registerClickListener(View.OnTouchListener listener) {
         mListener = listener;
+    }
+
+    @Override
+    public void unregisterClickListener(View.OnTouchListener listener) {
+        mListener = null;
     }
 }

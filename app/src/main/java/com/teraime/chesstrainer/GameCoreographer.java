@@ -1,15 +1,12 @@
 package com.teraime.chesstrainer;
 
-import android.animation.Animator;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.BlendModeColorFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
-import android.graphics.PathEffect;
 import android.graphics.Rect;
 import android.graphics.Shader;
 import android.graphics.Typeface;
@@ -18,28 +15,24 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.SurfaceHolder;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
-
 import com.teraime.chesstrainer.databinding.ActivityFullscreenBinding;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 
 public class GameCoreographer implements SceneContext, GameWidget {
 
-    private final ImageButton endB,startButton, easyDiffB,normalDiffB,hardDiffB;
+    private final ImageButton startButton;
+    private final ImageButton easyDiffB;
+    private final ImageButton normalDiffB;
+    private final ImageButton hardDiffB;
     private final TextView easyT;
     private final Context context;
     private final Paint p2 = new Paint();
@@ -52,13 +45,11 @@ public class GameCoreographer implements SceneContext, GameWidget {
     Shader mShader;
     Bitmap on,off,pressed;
     ArrayList<View> viewsToFadeIn;
-    private int shrinkTarget=0,shrinkTargetX;
-    private int shrinkX;
-    private int orbY;
+    private final int shrinkTarget;
     private final ImageView easyTxt,normalTxt,hardTxt;
     boolean newPlayer = false;
     View selected = null;
-    private GameContext gc;
+    private final GameContext gc;
     final private Queue<DrawableGameWidget> mWidgets = new ConcurrentLinkedQueue<>();
     final Bitmap orb;
 
@@ -80,7 +71,7 @@ public class GameCoreographer implements SceneContext, GameWidget {
         easyDiffB = binding.diffEasyButton;
         normalDiffB = binding.diffNormalButton;
         hardDiffB = binding.diffHardButton;
-        endB = binding.endB;
+
         easyT = binding.easyT;
         orb = BitmapFactory.decodeResource(context.getResources(),R.drawable.glassball3);
 
@@ -94,7 +85,7 @@ public class GameCoreographer implements SceneContext, GameWidget {
 
         startButton.setVisibility(View.VISIBLE);
 
-        viewsToFadeIn = new ArrayList<View>();
+        viewsToFadeIn = new ArrayList<>();
         viewsToFadeIn.add(easyDiffB);
         viewsToFadeIn.add(normalDiffB);
         viewsToFadeIn.add(hardDiffB);
@@ -220,7 +211,7 @@ public class GameCoreographer implements SceneContext, GameWidget {
                                             startButton.setVisibility(View.GONE);
                                         }
                                     });
-                                    gc.sceneDone();
+                                    gc.sceneDone("Intro");
                                 }});
                             mDrawableAspect.addAnimation(move());
                         }
@@ -258,7 +249,7 @@ public class GameCoreographer implements SceneContext, GameWidget {
                             fade(0, 500);
                         } else {
                             startButton.setVisibility(View.GONE);
-                            gc.sceneDone();
+                            gc.sceneDone("Intro");
                         }
 
                         break;

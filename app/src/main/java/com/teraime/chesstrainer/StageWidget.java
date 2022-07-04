@@ -118,8 +118,6 @@ public class StageWidget implements GameWidget, View.OnTouchListener {
         numRectTwo = new Rect((int)(int)(right-right*.15f),(int)(top+squareSize/3f),(int)(right-right*.08f),(int)(bottom-squareSize/3f));
         numRectThree = new Rect((int)(int)(right-right*.08f),(int)(top+squareSize/3f),(int)(right-right*.01f),(int)(bottom-squareSize/3f));
 
-        GameContext.gc.registerClickListener(this);
-
     }
 
     boolean scaleB = false;
@@ -184,7 +182,8 @@ public class StageWidget implements GameWidget, View.OnTouchListener {
                 scaleB=false;
                 if (stageRectO2.contains(event.getX(),event.getY()-offset)) {
                     Log.d("v","clock!");
-
+                    GameContext.gc.incrementCurrentStage(stage);
+                    GameContext.gc.sceneDone("StageSelect");
                 }
                 break;
 

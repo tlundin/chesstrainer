@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class GameView implements SceneContext, View.OnClickListener, View.OnTouchListener {
+public class GameView implements SceneContext, View.OnTouchListener {
 
 
     public static float DragRectSize = 1.5f;
@@ -35,6 +35,7 @@ public class GameView implements SceneContext, View.OnClickListener, View.OnTouc
     private final Handler shakeHandler;
     private final Runnable repeatShake;
     private final DrawableGameWidget boardDrawableWidget;
+    private final DrawableGameWidget stageWidgetD;
     private Board board;
     private StageWidget stageWidget;
     private ScoreKeeper progressor;
@@ -89,12 +90,12 @@ public class GameView implements SceneContext, View.OnClickListener, View.OnTouc
         board.setupPosition(pos);
         User user = Tools.getUser();
         progressor = new ScoreKeeper(context, progressorOffsetY,canvasW,progressorHeight);
-        stageWidget = new StageWidget(context,boardOffset,canvasW,canvasW,board.getSquareSize(),user.stage);
+        stageWidget = new StageWidget(context,boardOffset,canvasW,canvasW,board.getSquareSize(),user.stage+1);
         mWidgets = new ConcurrentLinkedQueue<>();
         boardDrawableWidget = new DrawableGameWidget(board,boardOffset);
         mWidgets.add(boardDrawableWidget);
         mWidgets.add(new DrawableGameWidget(progressor,progressorOffsetY));
-
+        stageWidgetD = new DrawableGameWidget(stageWidget,boardOffset);
     }
 
     public Queue<DrawableGameWidget> getWidgets() {
@@ -106,8 +107,13 @@ public class GameView implements SceneContext, View.OnClickListener, View.OnTouc
     }
 
     public void addStageWidget() {
-        mWidgets.add(new DrawableGameWidget(stageWidget,boardOffset));
+        mWidgets.add(stageWidgetD);
+        GameContext.gc.registerClickListener(stageWidget);
     }
+    public void removeStageWidget() {
+        mWidgets.remove(stageWidgetD);
+        GameContext.gc.unregisterClickListener(stageWidget);
+    } 
 
     public void onFail() {
         currFill = (currFill-10);
@@ -188,10 +194,6 @@ public class GameView implements SceneContext, View.OnClickListener, View.OnTouc
         return board;
     }
 
-    @Override
-    public void onClick(View view) {
-        Log.d(TAG,"pluck");
-    }
 
     boolean dragActive = false;
     int draggedPiece;
@@ -251,36 +253,32 @@ public class GameView implements SceneContext, View.OnClickListener, View.OnTouc
 
     private void onTestClickSuccess() {
         moveSpeedIndex = Math.min(moveSpeedIndex+1,moveSpeedA.length-1);
-        onTactic();
+        onTactic(null);
     }
     private void onTestClickFail() {
         moveSpeedIndex = Math.max(moveSpeedIndex-1,0);
         lastmin=currentMin;
-        onTactic();
+        onTactic(null);
     }
 
-    public Progressor.Difficulty getDifficulty(int level) {
-        if (mTacticProblems == null)
-            return Progressor.Difficulty.normal;
-        else
-            return mTacticProblems.get(level).difficulty;
-
-    }
 
     List<Types.TacticProblem> mTacticProblems;
     public void onTestClick() {
-        db.openDataBase();
-        mTacticProblems = db.getTacticProblems(500,800,-1);
-        db.close();
-        onTactic();
+
     }
 
-    public void onTactic() {
+    public void startStage(StageDescriptor sd) {
+        //board.setupPosition(new ChessPosition(INITIAL_BOARD));
+        Log.d("v","In startStage");
+        onTactic((Types.TacticProblem) sd.levelMap.get(0));
+    }
+
+    public void onTactic(Types.TacticProblem problem) {
         //board.move(new BasicMove(new Cord(4,1),new Cord(4,2)));
         //File dbP = context.getDatabasePath("chess.db");
         //Log.d("db","FILE "+dbP.getAbsolutePath());
-        Types.TacticProblem problem = mTacticProblems.get(currentMoveSpeed);
-        if (!moveIsActive) {
+
+        if (!moveIsActive && problem != null) {
             currentMin=lastmin;
             lastmin = problem.rating;
             Log.d("v","lastmin now "+lastmin);
@@ -324,4 +322,6 @@ public class GameView implements SceneContext, View.OnClickListener, View.OnTouc
     public void setCurrentGameState(GameState newState) {
         gameState = newState;
     }
+
+    
 }

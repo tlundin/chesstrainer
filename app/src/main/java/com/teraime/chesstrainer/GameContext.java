@@ -36,8 +36,8 @@ public class GameContext {
         return gc;
     }
 
-    public void sceneDone() {
-        sceneManager.onSceneDone();
+    public void sceneDone(String sceneName) {
+        sceneManager.onSceneDone(sceneName);
     }
 
     public void setPuzzles(Map<Integer, List<Types.TacticProblem>> ratedProblemMap, Map<Integer, List<Types.MatePuzzle>> matingPuzzleMap) {
@@ -73,6 +73,14 @@ public class GameContext {
 
     public void registerClickListener(View.OnTouchListener listener) {
         sceneManager.registerClickListener(listener);
+    }
+    public void unregisterClickListener(View.OnTouchListener listener) {
+        sceneManager.unregisterClickListener(listener);
+    }
+
+
+    public void incrementCurrentStage(int stage) {
+        user.stage = stage;
     }
 
 
