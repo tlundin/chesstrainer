@@ -146,14 +146,11 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
                // game.onResetClick();
             }
         });
-        mContentView.setOnTouchListener(new View.OnTouchListener() {
-                                            @Override
-                                            public boolean onTouch(View v, MotionEvent event) {
-                                                if (mListener != null)
-                                                    mListener.onTouch(v,event);
-                                                return false;
-                                            }
-                                        });
+        mContentView.setOnTouchListener((v, event) -> {
+            if (mListener != null)
+                return mListener.onTouch(v,event);
+            return false;
+        });
         createDB();
     }
 

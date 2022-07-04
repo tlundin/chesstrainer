@@ -101,11 +101,11 @@ public class StageWidget implements GameWidget, View.OnTouchListener {
         nioBmp = BitmapFactory.decodeResource(ctx.getResources(),R.drawable.nio);
         zeroBmp = BitmapFactory.decodeResource(ctx.getResources(),R.drawable.zero);
 
-        Bitmap bitmapl = BitmapFactory.decodeResource(ctx.getResources(),R.drawable.dark_square_wood);
+        Bitmap bitmapl = BitmapFactory.decodeResource(ctx.getResources(),R.drawable.glassball3);
         dk_shade = new BitmapShader(bitmapl, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
         p3.setShader(dk_shade);
         Bitmap bitmapd = BitmapFactory.decodeResource(ctx.getResources(),R.drawable.white_square_wood);
-        lt_shade = new BitmapShader(bitmapd, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
+        lt_shade = new BitmapShader(bitmapl, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
 
 
         stageRectO1 = new RectF(0,0,width,height);
@@ -122,10 +122,17 @@ public class StageWidget implements GameWidget, View.OnTouchListener {
 
     }
 
+    boolean scaleB = false;
+    boolean save = false;
     @Override
     public void draw(Canvas c) {
-        //c.drawDoubleRoundRect(stageRectO,25,25,stageRectI,25,25,p);
         c.drawDoubleRoundRect(stageRectO1,0,0,stageRectO2,25,25,pO);
+        if (scaleB) {
+            c.save();
+            c.scale(0.9f, 0.9f);
+            c.translate(0.055f*width,.055f*height);
+            save=true;
+        }
         c.drawDoubleRoundRect(stageRectO2,25,25,stageRectI2,25,25,p2);
         c.drawRoundRect(stageRectI2,25,25,p);
         c.drawRoundRect(stageRectI2,25,25,p3);
@@ -142,6 +149,10 @@ public class StageWidget implements GameWidget, View.OnTouchListener {
         if (stdT>0)
             std = (std - 10*stdT);
         c.drawBitmap(getNumberBmp(std),null,numRectThree,p4);
+        if (save) {
+            save = false;
+            c.restore();
+        }
     }
 
     @Override
@@ -157,22 +168,28 @@ public class StageWidget implements GameWidget, View.OnTouchListener {
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        Log.d("v","GETZ");
+        Log.d("v","event "+event.getAction());
         switch (event.getAction()) {
+
             case MotionEvent.ACTION_DOWN:
                 if (stageRectO2.contains(event.getX(),event.getY()-offset)) {
                     Log.d("v","down!");
                     p3.setShader(lt_shade);
+                    scaleB=true;
                 }
+                break;
             case MotionEvent.ACTION_UP:
+                Log.d("v","up!");
+                p3.setShader(dk_shade);
+                scaleB=false;
                 if (stageRectO2.contains(event.getX(),event.getY()-offset)) {
                     Log.d("v","clock!");
-                    p3.setShader(dk_shade);
+
                 }
                 break;
 
         }
 
-        return false;
+        return true;
     }
 }
