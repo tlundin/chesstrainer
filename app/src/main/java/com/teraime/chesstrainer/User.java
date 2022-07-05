@@ -9,6 +9,7 @@ public class User {
     String name;
     int stage;
     int rating;
+    int level;
 
     public User() {
         try {
@@ -18,8 +19,9 @@ public class User {
                     .put("RATING", "1500")
                     .toString();
             name = "Terje";
-            stage = Integer.parseInt("1");
+            stage = Integer.parseInt("0");
             rating = 1600;
+            level = 1;
         } catch (JSONException e) {
             e.printStackTrace();
         }

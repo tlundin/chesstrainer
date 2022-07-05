@@ -12,6 +12,8 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.util.Log;
 
+import java.util.Stack;
+
 
 public class Board implements GameWidget
 {
@@ -31,17 +33,19 @@ public class Board implements GameWidget
     final Bitmap[] pieceBox;
     final Boolean hasEdge;
     final Square[] squares;
-    final Rect[] pieceSquares;
+    final PieceRect[] pieceSquares;
     final int border_thickness,gridSize;
     private ChessPosition mPosition=null;
     private boolean whiteOnTop = false;
     private Cord movingPieceInitialPosition,Outside;
     private Bitmap draggedPieceBmp,okAnimateBmp;
-    private Rect dragRect,okRect;
+    private Rect okRect;
     private int boardOffset;
     final float centerX,centerY;
     private Cord okLocation;
-    private boolean dragActive = false;
+    private Rect dragStartRect;
+    private int dragStartIndex;
+    private final Bitmap chessBoardBmp;
 
     public Board(Context context, ScaleOptions scaleOption, StyleOptions boardStyle, StyleOptions pieceStyle, int size_with_borders, int bo) {
         int _size = scale(size_with_borders,scaleOption);
@@ -77,14 +81,13 @@ public class Board implements GameWidget
             break;
         }
         gridRect = new Rect(border_thickness,border_thickness,_size-border_thickness,_size-border_thickness);
-        squares = new Square[64]; pieceSquares = new Rect[64];
+        squares = new Square[64]; pieceSquares = new PieceRect[64];
         w_square = BitmapFactory.decodeResource(context.getResources(),R.drawable.white_square_wood);
         b_square = BitmapFactory.decodeResource(context.getResources(),R.drawable.dark_square_wood);
         int top = 0;int left=0;int bottom=0;int right=0;
         int i=0;
         int square_size = getSquareSize();
-        dragRect = new Rect(0,0,(int)(square_size*GameView.DragRectSize),(int)(square_size*GameView.DragRectSize));
-        //moveRect = new Rect(0,0,square_size,square_size);
+
         boolean isWhite=false;
         for(int row=0; row<8 ; row++) {
             isWhite = !isWhite;
@@ -95,7 +98,7 @@ public class Board implements GameWidget
                 bottom = top+square_size;
                 squares[i] = new Square(left,top,right,bottom,isWhite);
                 isWhite = !isWhite;
-                pieceSquares[i++] = new Rect(left,top,right,bottom);
+                pieceSquares[i++] = new PieceRect(left,top,right,bottom);
             }
         }
         okRect = new Rect(0,0,square_size/2,square_size/2);
@@ -137,6 +140,20 @@ public class Board implements GameWidget
             break;
         }
         pieceBox = new Bitmap[]{null,w_king,w_queen,w_bishop,w_knight,w_rook,w_pawn,b_king,b_queen,b_bishop,b_knight,b_rook,b_pawn};
+        chessBoardBmp = Bitmap.createBitmap(square_size*8,square_size*8, Bitmap.Config.ARGB_8888);
+
+        Canvas c = new Canvas(chessBoardBmp);
+        i = 0;
+        for (int row = 0; row < 8; row++) {
+            //square = (square == w_square) ? b_square : w_square;
+            for (int column = 0; column < 8; column++) {
+                //square = (square == w_square) ? b_square : w_square;
+                //c.drawBitmap(square, null, squares[i], p);
+                p = (column % 2 + row % 2) % 2 == 0 ? whiteP : blackP;
+                c.drawRect(squares[i++].mRect, p);
+            }
+        }
+
     }
 
     public Bitmap[] getPieceBox() {
@@ -167,13 +184,7 @@ public class Board implements GameWidget
         return -1;
     }
 
-    public void startDrag(Cord p, int draggedPiece) {
-        Bitmap draggedPieceBmp = getPieceBox()[draggedPiece];
-        int squareSize = getSquareSize();
-        this.draggedPieceBmp =draggedPieceBmp;
-        dragActive=true;
 
-    }
 
     public Cord calculateColRow(int x, int y) {
         int column = (x-border_thickness)/getSquareSize();
@@ -190,7 +201,7 @@ public class Board implements GameWidget
         return new Point(x,y);
     }
 
-    public BasicMove dropMovingPiece(Cord movingPieceInitialPosition, Point dropPoint, int piece) {
+    public BasicMove dropMovingPiece(PieceRect movingSquare, Cord movingPieceInitialPosition, Point dropPoint, int piece) {
         int x = dropPoint.x;
         int y = dropPoint.y;
         Cord movingPieceEndPosition;
@@ -204,10 +215,53 @@ public class Board implements GameWidget
             if (!(movingPieceInitialPosition.equals(movingPieceEndPosition)))
                 bMove = new BasicMove(movingPieceInitialPosition,movingPieceEndPosition);
         }
-        draggedPieceBmp = null;
-        dragActive=false;
+        movingSquare.moveDone();
         return bMove;
     }
+
+    public PieceRect startDrag(int piece,int x,int y) {
+        int column = (x-border_thickness)/getSquareSize();
+        int row = (y-border_thickness)/getSquareSize();
+        dragStartIndex = 8*row+column;
+        return pieceSquares[dragStartIndex].move(piece);
+        //dragRect = new Rect(0,0,(int)(square_size*GameView.DragRectSize),(int)(square_size*GameView.DragRectSize));
+    }
+
+    public GameAnimation move(Move move, PathFactory.Type type) {
+        Cord movingPieceInitialPosition = move.getFromCord();
+        final Point movingPiecePosition = calculateXYFromGrid(move.getFromColumn(), move.getFromRow());
+        final Point movingPieceDestination = calculateXYFromGrid(move.getToColumn(), move.getToRow());
+        final int movingPieceId = mPosition.get(move.getFromColumn(), move.getFromRow());
+        //movingPieceBmp = pieceBox[movingPieceId];
+        final MoveVector vect = PathFactory.generate(type, movingPiecePosition, movingPieceDestination);
+        final Point[] pointsOnTheWay = vect.mPoints;
+        final PieceRect movePieceRect = pieceSquares[8*move.getFromRow()+move.getFromColumn()].move(movingPieceId);
+        final Rect moveRect = movePieceRect.r;
+        final float width = moveRect.width();
+        final float height = moveRect.height();
+
+        return new GameAnimation() {
+            int count = 0;
+            boolean done = false;
+
+            @Override
+            public boolean stepAnimate() {
+                moveRect.offsetTo(pointsOnTheWay[count].x, pointsOnTheWay[count].y);
+                final int rCalc = (int)(width+width*vect.mScale[count]);
+                final int bCalc = (int)(height+height*vect.mScale[count]);
+                moveRect.set(moveRect.left,moveRect.top,moveRect.left+rCalc,moveRect.top+bCalc);
+                count++;
+                if (count == pointsOnTheWay.length) {
+                    dropMovingPiece(movePieceRect,movingPieceInitialPosition,movingPieceDestination, movingPieceId);
+                    done = true;
+                }
+
+                return done;
+            }
+        };
+
+    }
+
 
     public boolean isInside(int x, int y) {
         return gridRect.contains(x,y);
@@ -249,41 +303,6 @@ public class Board implements GameWidget
         return move(move, Linear);
     }
 
-    public GameAnimation move(Move move, PathFactory.Type type) {
-        Cord movingPieceInitialPosition = move.getFromCord();
-        final Point movingPiecePosition = calculateXYFromGrid(move.getFromColumn(), move.getFromRow());
-        final Point movingPieceDestination = calculateXYFromGrid(move.getToColumn(), move.getToRow());
-        final int movingPieceId = mPosition.get(move.getFromColumn(), move.getFromRow());
-        //movingPieceBmp = pieceBox[movingPieceId];
-        final MoveVector vect = PathFactory.generate(type, movingPiecePosition, movingPieceDestination);
-        final Point[] pointsOnTheWay = vect.mPoints;
-        final Rect moveRect = pieceSquares[8*move.getFromRow()+move.getFromColumn()];
-        final float width = moveRect.width();
-        final float height = moveRect.height();
-        final Rect startP = new Rect(moveRect);
-
-        return new GameAnimation() {
-            int count = 0;
-            boolean done = false;
-
-            @Override
-            public boolean stepAnimate() {
-                moveRect.offsetTo(pointsOnTheWay[count].x, pointsOnTheWay[count].y);
-                final int rCalc = (int)(width+width*vect.mScale[count]);
-                final int bCalc = (int)(height+height*vect.mScale[count]);
-                moveRect.set(moveRect.left,moveRect.top,moveRect.left+rCalc,moveRect.top+bCalc);
-                count++;
-                if (count == pointsOnTheWay.length) {
-                    dropMovingPiece(movingPieceInitialPosition,movingPieceDestination, movingPieceId);
-                    pieceSquares[8*move.getFromRow()+move.getFromColumn()] = startP;
-                    done = true;
-                }
-
-                return done;
-            }
-        };
-
-    }
 
     boolean swellAnimate = false, okAnimate=false;
     float swellFactor=1f;
@@ -361,14 +380,15 @@ public class Board implements GameWidget
     }
 
 
-    public void moveDragRect(Point point) {
-        dragRect.offsetTo(point.x,point.y);
+    public void moveDragRect(PieceRect dragRect,Point point) {
+        dragRect.r.offsetTo(point.x,point.y);
     }
 
     public Square[] getSquares() {
         return squares;
     }
 
+    Stack<PieceRect> moveStack = new Stack<>();
 
     public void draw(Canvas c) {
         c.drawColor(Color.BLACK);
@@ -381,17 +401,9 @@ public class Board implements GameWidget
             c.drawBitmap(edgeVertical, null, L_Edge, neutralP);
             c.drawBitmap(edgeVertical, null, R_Edge, neutralP);
         }
-        int i = 0;
-        for (int row = 0; row < 8; row++) {
-            //square = (square == w_square) ? b_square : w_square;
-            for (int column = 0; column < 8; column++) {
-                //square = (square == w_square) ? b_square : w_square;
-                //c.drawBitmap(square, null, squares[i], p);
-                p = (column % 2 + row % 2) % 2 == 0 ? whiteP : blackP;
-                c.drawRect(squares[i++].mRect, p);
-            }
-        }
-        i=0;
+        c.drawBitmap(chessBoardBmp,null,boardRect,neutralP);
+
+        int i=0;
         for (int row = 0; row < 8; row++) {
             //square = (square == w_square) ? b_square : w_square;
             for (int column = 0; column < 8; column++) {
@@ -399,13 +411,19 @@ public class Board implements GameWidget
                 int flip_column = whiteOnTop ? 7 - column : column;
                 //Don't draw The moving piece
 
-                if (!mPosition.isEmpty(flip_column, flip_row))
-                        c.drawBitmap(pieceBox[mPosition.get(flip_column, flip_row)], null, pieceSquares[i], neutralP);
+                if (!mPosition.isEmpty(flip_column, flip_row)) {
+                    if (!pieceSquares[i].isMoving)
+                        c.drawBitmap(pieceBox[mPosition.get(flip_column, flip_row)], null, pieceSquares[i].r, neutralP);
+                    else
+                        moveStack.push(pieceSquares[i]);
+                }
                 i++;
             }
         }
-        if (dragActive) {
-            c.drawBitmap(draggedPieceBmp,null, dragRect, neutralP);
+        PieceRect pr;
+        while(!moveStack.isEmpty()) {
+            pr = moveStack.pop();
+            c.drawBitmap(pieceBox[pr.mPiece], null, pr.r, neutralP);
         }
         if (okAnimate) {
             final Point okLocationXY=calculateXYFromGrid(okLocation.column,okLocation.row);

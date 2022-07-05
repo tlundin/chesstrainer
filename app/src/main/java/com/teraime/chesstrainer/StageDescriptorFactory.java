@@ -15,7 +15,8 @@ public class StageDescriptorFactory {
                     if (i%2==0)
                         levelMap.put(i,gc.getTactic(uRating));
                     else
-                        levelMap.put(i,gc.getMatePuzzle(2));
+                        levelMap.put(i,gc.getTactic(uRating));
+                        //levelMap.put(i,gc.getMatePuzzle(2));
                 }
 
         }

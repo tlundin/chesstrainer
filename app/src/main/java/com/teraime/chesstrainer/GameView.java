@@ -49,6 +49,7 @@ public class GameView implements SceneContext, View.OnTouchListener {
     private int score = 0;
     String TAG = "GameView";
     private final Queue<DrawableGameWidget> mWidgets;
+    private StageDescriptor mStage;
 
     public GameView(Context context, MySQLiteHelper db, TextView scoreT, ImageButton endB)  {
 
@@ -118,16 +119,21 @@ public class GameView implements SceneContext, View.OnTouchListener {
     public void onFail() {
         currFill = (currFill-10);
         if (currFill < 0) {
-            endButton.setImageBitmap(sad);
-            endButton.setVisibility(View.VISIBLE);
-            repeatShake.run();
-            endButton.setOnClickListener(new View.OnClickListener() {
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
-                public void onClick(View view) {
-                    shakeHandler.removeCallbacks(repeatShake);
-                    endButton.setVisibility(View.GONE);
-                    currFill = 0;
-                    onTestClickFail();
+                public void run() {
+                    endButton.setImageBitmap(sad);
+                    endButton.setVisibility(View.VISIBLE);
+                    repeatShake.run();
+                    endButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            shakeHandler.removeCallbacks(repeatShake);
+                            endButton.setVisibility(View.GONE);
+                            currFill = 0;
+                            onTestClickFail();
+                        }
+                    });
                 }
             });
         } else {
@@ -136,16 +142,11 @@ public class GameView implements SceneContext, View.OnTouchListener {
         }
     }
 
-    int[] moveSpeedA = new int[]{1,2,4,8,10,16,20,25};
-    int moveSpeedIndex = 0;
-    int currentMoveSpeed = 1;
     int currFill = 0;
-
     public void nextLevel() {
         try {
             scoreT.setText("" + score++);
             Thread.sleep(500);
-            currentMoveSpeed = moveSpeedA[moveSpeedIndex];
             /*progressor.scrollAnimate(currentMoveSpeed, new AnimationDoneListener() {
                 @Override
                 public void onAnimationDone() {
@@ -198,12 +199,12 @@ public class GameView implements SceneContext, View.OnTouchListener {
     boolean dragActive = false;
     int draggedPiece;
     GameState gameState = null;
-
+    Cord movingPieceInitialPosition = null;
+    PieceRect movePieceRect;
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
         int x = (int)motionEvent.getX();
         int y = (int)motionEvent.getY()-boardOffset;
-        Cord movingPieceInitialPosition = null;
         switch (motionEvent.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 if (!moveIsActive && !dragActive) {
@@ -218,7 +219,7 @@ public class GameView implements SceneContext, View.OnTouchListener {
                             dragActive = true;
                         if (dragActive) {
                             movingPieceInitialPosition = board.calculateColRow(x, y);
-                            board.startDrag(movingPieceInitialPosition, draggedPiece);
+                            movePieceRect = board.startDrag(draggedPiece,x,y);
                         }
                     }
                 }
@@ -226,7 +227,7 @@ public class GameView implements SceneContext, View.OnTouchListener {
             case MotionEvent.ACTION_UP:
                 if (dragActive) {
                     dragActive = false;
-                    BasicMove bMove= board.dropMovingPiece(movingPieceInitialPosition,new Point(x, y), draggedPiece);
+                    BasicMove bMove= board.dropMovingPiece(movePieceRect,movingPieceInitialPosition,new Point(x, y), draggedPiece);
                     if (dragListener != null && bMove != null) {
                         dragListener.onDragDone(bMove);
                     }
@@ -235,13 +236,13 @@ public class GameView implements SceneContext, View.OnTouchListener {
             case MotionEvent.ACTION_MOVE:
                 if (dragActive) {
                     int dragPoint = (int)(board.getSquareSize()*DragRectSize/2);
-                    board.moveDragRect(new Point(x-dragPoint,y-dragPoint));
+                    board.moveDragRect(movePieceRect,new Point(x-dragPoint,y-dragPoint));
                 }
                 break;
             default:
                 break;
         }
-        return false;
+        return true;
     }
 
     public void onFlipClick() {
@@ -252,13 +253,12 @@ public class GameView implements SceneContext, View.OnTouchListener {
 
 
     private void onTestClickSuccess() {
-        moveSpeedIndex = Math.min(moveSpeedIndex+1,moveSpeedA.length-1);
-        onTactic(null);
+        GameContext.gc.user.level++;
+        onTactic();
     }
     private void onTestClickFail() {
-        moveSpeedIndex = Math.max(moveSpeedIndex-1,0);
         lastmin=currentMin;
-        onTactic(null);
+        onTactic();
     }
 
 
@@ -270,14 +270,16 @@ public class GameView implements SceneContext, View.OnTouchListener {
     public void startStage(StageDescriptor sd) {
         //board.setupPosition(new ChessPosition(INITIAL_BOARD));
         Log.d("v","In startStage");
-        onTactic((Types.TacticProblem) sd.levelMap.get(0));
+        GameContext.gc.registerClickListener(this);
+        mStage = sd;
+        onTactic();
     }
 
-    public void onTactic(Types.TacticProblem problem) {
+    public void onTactic() {
         //board.move(new BasicMove(new Cord(4,1),new Cord(4,2)));
         //File dbP = context.getDatabasePath("chess.db");
         //Log.d("db","FILE "+dbP.getAbsolutePath());
-
+        Types.TacticProblem problem =(Types.TacticProblem)mStage.levelMap.get(GameContext.gc.user.level);
         if (!moveIsActive && problem != null) {
             currentMin=lastmin;
             lastmin = problem.rating;
@@ -303,7 +305,12 @@ public class GameView implements SceneContext, View.OnTouchListener {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                board.move(moveThatLeadHere);
+                boardDrawableWidget.addAnimation(board.move(moveThatLeadHere), new AnimationDoneListener() {
+                    @Override
+                    public void onAnimationDone() {
+                        moveIsDone();
+                    }
+                });
                 boardAfterMove = ml.getCurrentPosition().getPosition();
             }
         }

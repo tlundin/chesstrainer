@@ -11,7 +11,7 @@ public class TacticsHandler implements MoveCallBack_I {
 
     public TacticsHandler(MoveList ml, GameView gv) {
         this.moveList = ml;
-        this.board = board;
+        this.board = gv.getBoard();
         this.gv = gv;
         wBoard = gv.getBoardWidget();
     }
@@ -48,7 +48,13 @@ public class TacticsHandler implements MoveCallBack_I {
                     Log.d("v", "CORRECT!");
                     if (moveList.goForward()) {
                         Log.d("v", "another move!");
-                        board.move(moveList.getCurrentPosition().getMove());
+                        wBoard.addAnimation(board.move(moveList.getCurrentPosition().getMove()), new AnimationDoneListener() {
+                            @Override
+                            public void onAnimationDone() {
+                                gv.moveIsDone();
+                            }
+                        });
+
                     } else {
                         wBoard.addAnimation(board.okAnimate(bMove.to), new AnimationDoneListener() {
                             @Override

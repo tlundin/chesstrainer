@@ -76,7 +76,7 @@ public class SceneLoop {
 
     public void stop(DoneCallback stoppedCb) {
         doneQueue.add(stoppedCb);
-        stopped.set(5);
+        stopped.set(25);
     }
     public void stop() {
         stopped.set(0);
