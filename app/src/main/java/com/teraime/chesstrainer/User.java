@@ -20,7 +20,7 @@ public class User {
                     .toString();
             name = "Terje";
             stage = Integer.parseInt("0");
-            rating = 1600;
+            rating = 1400;
             level = 1;
         } catch (JSONException e) {
             e.printStackTrace();

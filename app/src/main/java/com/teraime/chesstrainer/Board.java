@@ -317,11 +317,11 @@ public class Board implements GameWidget
             boolean done = false;
             @Override
             public boolean stepAnimate() {
-                rotateDegrees = rotateFactors[count++];
                 if (count == rotateFactors.length) {
                     okAnimate = false;
                     done = true;
-                }
+                } else
+                    rotateDegrees = rotateFactors[count++];
                 return done;
             }
         };
