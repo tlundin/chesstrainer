@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SceneLoop {
-    static int FRAME_RATE = 30;
+    public static int FRAME_RATE = 30;
     private final Runnable mLoop;
     AtomicBoolean alive = new AtomicBoolean(false);
     AtomicInteger stopped = new AtomicInteger(-1);

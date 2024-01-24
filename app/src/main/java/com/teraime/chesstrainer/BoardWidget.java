@@ -12,10 +12,12 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.util.Log;
 
+import com.teraime.chesstrainer.widgets.GameWidget;
+
 import java.util.Stack;
 
 
-public class Board implements GameWidget
+public class BoardWidget implements GameWidget
 {
     final StyleOptions pieceStyle,boardStyle;
     final static float border_thickness_as_percentage = .10f;
@@ -47,7 +49,7 @@ public class Board implements GameWidget
     private int dragStartIndex;
     private final Bitmap chessBoardBmp;
 
-    public Board(Context context, ScaleOptions scaleOption, StyleOptions boardStyle, StyleOptions pieceStyle, int size_with_borders, int bo) {
+    public BoardWidget(Context context, ScaleOptions scaleOption, StyleOptions boardStyle, StyleOptions pieceStyle, int size_with_borders, int bo) {
         int _size = scale(size_with_borders,scaleOption);
         this.boardOffset = bo;
         this.pieceStyle = pieceStyle;
@@ -150,7 +152,7 @@ public class Board implements GameWidget
                 //square = (square == w_square) ? b_square : w_square;
                 //c.drawBitmap(square, null, squares[i], p);
                 p = (column % 2 + row % 2) % 2 == 0 ? whiteP : blackP;
-                c.drawRect(squares[i++].mRect, p);
+                c.drawRect(squares[i++].getRect(), p);
             }
         }
 
@@ -233,10 +235,10 @@ public class Board implements GameWidget
         final Point movingPieceDestination = calculateXYFromGrid(move.getToColumn(), move.getToRow());
         final int movingPieceId = mPosition.get(move.getFromColumn(), move.getFromRow());
         //movingPieceBmp = pieceBox[movingPieceId];
-        final MoveVector vect = PathFactory.generate(type, movingPiecePosition, movingPieceDestination);
-        final Point[] pointsOnTheWay = vect.mPoints;
+        final MoveVector vector = PathFactory.generate(type, movingPiecePosition, movingPieceDestination);
+        final Point[] pointsOnTheWay = vector.mPoints;
         final PieceRect movePieceRect = pieceSquares[8*move.getFromRow()+move.getFromColumn()].move(movingPieceId);
-        final Rect moveRect = movePieceRect.r;
+        final Rect moveRect = movePieceRect.getRect();
         final float width = moveRect.width();
         final float height = moveRect.height();
 
@@ -247,8 +249,8 @@ public class Board implements GameWidget
             @Override
             public boolean stepAnimate() {
                 moveRect.offsetTo(pointsOnTheWay[count].x, pointsOnTheWay[count].y);
-                final int rCalc = (int)(width+width*vect.mScale[count]);
-                final int bCalc = (int)(height+height*vect.mScale[count]);
+                final int rCalc = (int)(width+width*vector.mScale[count]);
+                final int bCalc = (int)(height+height*vector.mScale[count]);
                 moveRect.set(moveRect.left,moveRect.top,moveRect.left+rCalc,moveRect.top+bCalc);
                 count++;
                 if (count == pointsOnTheWay.length) {
@@ -381,7 +383,7 @@ public class Board implements GameWidget
 
 
     public void moveDragRect(PieceRect dragRect,Point point) {
-        dragRect.r.offsetTo(point.x,point.y);
+        dragRect.getRect().offsetTo(point.x,point.y);
     }
 
     public Square[] getSquares() {
@@ -412,8 +414,8 @@ public class Board implements GameWidget
                 //Don't draw The moving piece
 
                 if (!mPosition.isEmpty(flip_column, flip_row)) {
-                    if (!pieceSquares[i].isMoving)
-                        c.drawBitmap(pieceBox[mPosition.get(flip_column, flip_row)], null, pieceSquares[i].r, neutralP);
+                    if (!pieceSquares[i].isMoving())
+                        c.drawBitmap(pieceBox[mPosition.get(flip_column, flip_row)], null, pieceSquares[i].getRect(), neutralP);
                     else
                         moveStack.push(pieceSquares[i]);
                 }
@@ -423,7 +425,7 @@ public class Board implements GameWidget
         PieceRect pr;
         while(!moveStack.isEmpty()) {
             pr = moveStack.pop();
-            c.drawBitmap(pieceBox[pr.mPiece], null, pr.r, neutralP);
+            c.drawBitmap(pieceBox[pr.getPiece()], null, pr.getRect(), neutralP);
         }
         if (okAnimate) {
             final Point okLocationXY=calculateXYFromGrid(okLocation.column,okLocation.row);

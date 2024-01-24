@@ -1,4 +1,4 @@
-package com.teraime.chesstrainer;
+package com.teraime.chesstrainer.widgets;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -10,6 +10,9 @@ import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.util.Log;
+
+import com.teraime.chesstrainer.R;
+import com.teraime.chesstrainer.widgets.GameWidget;
 
 public class ScoreKeeper implements GameWidget {
 
@@ -31,7 +34,7 @@ public class ScoreKeeper implements GameWidget {
         center.y = _height / 2;
         radius = _height / 2;
         offset=_offset;
-        glassBall = BitmapFactory.decodeResource(ctx.getResources(),R.drawable.glassball4);
+        glassBall = BitmapFactory.decodeResource(ctx.getResources(), R.drawable.glassball4);
         Log.d("box ",box.width()+" off "+offset);
 
         pR.setColor(Color.GREEN);

@@ -1,4 +1,4 @@
-package com.teraime.chesstrainer;
+package com.teraime.chesstrainer.scenes;
 
 
 import static com.teraime.chesstrainer.ChessConstants.INITIAL_BOARD;
@@ -6,27 +6,47 @@ import static com.teraime.chesstrainer.ChessConstants.INITIAL_BOARD;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.graphics.Point;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
+import com.teraime.chesstrainer.AnimationDoneListener;
+import com.teraime.chesstrainer.BasicMove;
+import com.teraime.chesstrainer.BoardWidget;
+import com.teraime.chesstrainer.ChessConstants;
+import com.teraime.chesstrainer.ChessPosition;
+import com.teraime.chesstrainer.Cord;
+import com.teraime.chesstrainer.DrawableGameWidget;
+import com.teraime.chesstrainer.GameContext;
+import com.teraime.chesstrainer.GameState;
+import com.teraime.chesstrainer.Move;
+import com.teraime.chesstrainer.MoveCallBack_I;
+import com.teraime.chesstrainer.MoveList;
+import com.teraime.chesstrainer.MySQLiteHelper;
+import com.teraime.chesstrainer.PieceRect;
+import com.teraime.chesstrainer.R;
+import com.teraime.chesstrainer.SceneContext;
+import com.teraime.chesstrainer.StageDescriptor;
+import com.teraime.chesstrainer.TacticsHandler;
+import com.teraime.chesstrainer.Tools;
+import com.teraime.chesstrainer.Types;
+import com.teraime.chesstrainer.User;
+import com.teraime.chesstrainer.widgets.ScoreKeeper;
+import com.teraime.chesstrainer.widgets.StageButtonWidget;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class GameView implements SceneContext, View.OnTouchListener {
+public class GameScene implements SceneContext, View.OnTouchListener {
 
 
     public static float DragRectSize = 1.5f;
@@ -36,8 +56,8 @@ public class GameView implements SceneContext, View.OnTouchListener {
     private final Runnable repeatShake;
     private final DrawableGameWidget boardDrawableWidget;
     private final DrawableGameWidget stageWidgetD;
-    private Board board;
-    private StageWidget stageWidget;
+    private BoardWidget board;
+    private StageButtonWidget stageButtonWidget;
     private ScoreKeeper progressor;
     private boolean moveIsActive = false;
     private MySQLiteHelper db;
@@ -51,7 +71,7 @@ public class GameView implements SceneContext, View.OnTouchListener {
     private final Queue<DrawableGameWidget> mWidgets;
     private StageDescriptor mStage;
 
-    public GameView(Context context, MySQLiteHelper db, TextView scoreT, ImageButton endB)  {
+    public GameScene(Context context, MySQLiteHelper db, TextView scoreT, ImageButton endB)  {
 
         this.context = context;
         this.db = db;
@@ -84,19 +104,19 @@ public class GameView implements SceneContext, View.OnTouchListener {
         //Board is screenw wide. Let progressor be about two squares wide.
         progressorHeight = canvasW/3;
         progressorOffsetY = boardOffset-progressorHeight-canvasW/12;
-        board = new Board(context,Board.ScaleOptions.MAX, Board.StyleOptions.plain, Board.StyleOptions.plain,canvasW, boardOffset);
+        board = new BoardWidget(context, BoardWidget.ScaleOptions.MAX, BoardWidget.StyleOptions.plain, BoardWidget.StyleOptions.plain,canvasW, boardOffset);
 
         ChessPosition pos = new ChessPosition(INITIAL_BOARD);//new ChessPosition(GameState.convertFenToBoard(ChessConstants.FEN_STARTING_POSITION));
         pos.print();
         board.setupPosition(pos);
         User user = Tools.getUser();
         progressor = new ScoreKeeper(context, progressorOffsetY,canvasW,progressorHeight);
-        stageWidget = new StageWidget(context,boardOffset,canvasW,canvasW,board.getSquareSize(),user.stage+1);
+        stageButtonWidget = new StageButtonWidget(context,boardOffset,canvasW,canvasW,board.getSquareSize(),user.stage);
         mWidgets = new ConcurrentLinkedQueue<>();
         boardDrawableWidget = new DrawableGameWidget(board,boardOffset);
         mWidgets.add(boardDrawableWidget);
         mWidgets.add(new DrawableGameWidget(progressor,progressorOffsetY));
-        stageWidgetD = new DrawableGameWidget(stageWidget,boardOffset);
+        stageWidgetD = new DrawableGameWidget(stageButtonWidget,boardOffset);
     }
 
     public Queue<DrawableGameWidget> getWidgets() {
@@ -109,16 +129,16 @@ public class GameView implements SceneContext, View.OnTouchListener {
 
     public void addStageWidget() {
         mWidgets.add(stageWidgetD);
-        GameContext.gc.registerClickListener(stageWidget);
+        GameContext.gc.registerClickListener(stageButtonWidget);
     }
     public void removeStageWidget() {
         mWidgets.remove(stageWidgetD);
-        GameContext.gc.unregisterClickListener(stageWidget);
-    } 
+        GameContext.gc.unregisterClickListener(stageButtonWidget);
+    }
+
+    int currFill = 0;
 
     public void onFail() {
-        currFill = (currFill-10);
-        if (currFill < 0) {
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
@@ -130,19 +150,14 @@ public class GameView implements SceneContext, View.OnTouchListener {
                         public void onClick(View view) {
                             shakeHandler.removeCallbacks(repeatShake);
                             endButton.setVisibility(View.GONE);
-                            currFill = 0;
                             onTestClickFail();
                         }
                     });
                 }
             });
-        } else {
-            progressor.setFillValue(currFill);
-            onTestClickFail();
-        }
     }
 
-    int currFill = 0;
+
     public void nextLevel() {
         try {
             scoreT.setText("" + score++);
@@ -159,21 +174,27 @@ public class GameView implements SceneContext, View.OnTouchListener {
             currFill = (currFill+10);
             progressor.setFillValue(currFill);
             if (currFill == 100) {
-
-                endButton.setImageBitmap(happy);
-                endButton.setVisibility(View.VISIBLE);
-                repeatShake.run();
-                endButton.setOnClickListener(new View.OnClickListener() {
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
-                    public void onClick(View view) {
-                        shakeHandler.removeCallbacks(repeatShake);
-                        endButton.setVisibility(View.GONE);
-                        currFill = 0;
-                        onTestClickSuccess();
+                    public void run() {
+
+                        endButton.setImageBitmap(happy);
+                        endButton.setVisibility(View.VISIBLE);
+                        repeatShake.run();
+                        endButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                shakeHandler.removeCallbacks(repeatShake);
+                                endButton.setVisibility(View.GONE);
+                                currFill = 0;
+                                progressor.setFillValue(currFill);
+                                onTestClickSuccess();
+                            }
+                        });
                     }
                 });
-            }
-            onTestClickSuccess();
+            } else
+                onTestClickSuccess();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -188,10 +209,10 @@ public class GameView implements SceneContext, View.OnTouchListener {
         boardAfterMove.print();
         moveIsActive = false;
         if (moveListener != null)
-            moveListener.onMoveDone();
+            moveListener.forEach(onMoveDone());
     }
 
-    public Board getBoard() {
+    public BoardWidget getBoard() {
         return board;
     }
 
@@ -279,7 +300,7 @@ public class GameView implements SceneContext, View.OnTouchListener {
         //board.move(new BasicMove(new Cord(4,1),new Cord(4,2)));
         //File dbP = context.getDatabasePath("chess.db");
         //Log.d("db","FILE "+dbP.getAbsolutePath());
-        Types.TacticProblem problem =(Types.TacticProblem)mStage.levelMap.get(GameContext.gc.user.level);
+        Types.TacticProblem problem =(Types.TacticProblem)mStage.getLevelMap().get(GameContext.gc.user.level);
         if (!moveIsActive && problem != null) {
             currentMin=lastmin;
             lastmin = problem.rating;
@@ -316,10 +337,11 @@ public class GameView implements SceneContext, View.OnTouchListener {
         }
     }
 
-    MoveCallBack_I dragListener,moveListener;
+    MoveCallBack_I dragListener;
+    List<MoveCallBack_I> moveListener = new ArrayList<>();
     private void registerDragAndMoveListener(MoveCallBack_I listener) {
         this.dragListener=listener;
-        this.moveListener=listener;
+        this.moveListener.add(listener);
     }
 
     public void onResetClick() {

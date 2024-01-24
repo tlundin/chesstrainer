@@ -4,10 +4,10 @@ import android.graphics.Rect;
 
 public class PieceRect  {
 
-        Rect r;
+        private Rect r;
         Rect tmpRect;
-        int mPiece;
-        boolean isMoving=false;
+        private int mPiece;
+        private boolean isMoving=false;
 
         public PieceRect(int left,int top,int right,int bottom) {
             r = new Rect(left,top,right,bottom);
@@ -29,5 +29,17 @@ public class PieceRect  {
     public void moveDone() {
             r = tmpRect;
             isMoving = false;
+    }
+
+    public Rect getRect() {
+            return r;
+    }
+
+    public int getPiece() {
+            return mPiece;
+    }
+
+    public boolean isMoving() {
+            return isMoving;
     }
 }

@@ -1,4 +1,4 @@
-package com.teraime.chesstrainer;
+package com.teraime.chesstrainer.widgets;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -17,22 +17,25 @@ import android.view.View;
 
 import androidx.core.content.ContextCompat;
 
-public class StageWidget implements GameWidget, View.OnTouchListener {
+import com.teraime.chesstrainer.GameContext;
+import com.teraime.chesstrainer.R;
+
+public class StageButtonWidget implements GameWidget, View.OnTouchListener {
 
     private final int width,height;
     private final Rect box;
     private final int offset,squareSize;
     private final int top,left,right,bottom;
-    private final Paint p,p2,p4,pT,pf,pO,p6;
+    private final Paint p,p2,p4,pT,pO,p6;
     private Paint p3,p7;
     private final Bitmap stageBmp,oneBmp,twoBmp,treBmp,fyrBmp,femBmp,sexBmp,sjuBmp,eitBmp,nioBmp,zeroBmp;
     private final Rect txtRect,numRectOne,numRectTwo,numRectThree;
     private final RectF stageRectO1,stageRectO2,stageRectI2;
-    private final BitmapShader dk_shade,lt_shade;
+    private final BitmapShader lt_shade;
     int offsetX = 10;
     int offsetY = 10;
     int stage;
-    public StageWidget(Context ctx, int _offset, int _width, int _height, int squareSize, int stage) {
+    public StageButtonWidget(Context ctx, int _offset, int _width, int _height, int squareSize, int stage) {
         this.stage=stage;
         width = _width;
         height = _height;
@@ -47,13 +50,13 @@ public class StageWidget implements GameWidget, View.OnTouchListener {
         p = new Paint();
         p2 = new Paint();
         p3 = new Paint();
-        pf = new Paint();
+//        pf = new Paint();
         pO = new Paint();
         p6 = new Paint();
 
-        //outer outer rect
+        //screen background darker when button active
         pO.setColor(Color.BLACK);
-        pO.setAlpha(50);
+        pO.setAlpha(100);
 
         //button outline
         p.setStyle(Paint.Style.STROKE);
@@ -61,22 +64,25 @@ public class StageWidget implements GameWidget, View.OnTouchListener {
         p.setStrokeWidth(15);
         p.setAntiAlias(true);
 
-        //shadow fill
-        pf.setStyle(Paint.Style.FILL);
-        //pf.setColor( ContextCompat.getColor(ctx, R.color.dk_green));
-        pf.setColor(Color.BLACK);
-        pf.setAntiAlias(true);
-
-        //fill rect
-        p3.setStyle(Paint.Style.FILL);
-        p6.setStyle(Paint.Style.FILL);
-
         //rect shadow
         p2.setColor(ContextCompat.getColor(ctx, R.color.dk_gray));
         p2.setStyle(Paint.Style.FILL);
         p2.setMaskFilter(new BlurMaskFilter(
                 5 /* shadowRadius */,
                 BlurMaskFilter.Blur.NORMAL));
+
+//        //shadow fill
+//        pf.setStyle(Paint.Style.FILL);
+//        //pf.setColor( ContextCompat.getColor(ctx, R.color.dk_green));
+//        pf.setColor(Color.BLACK);
+//        pf.setAntiAlias(true);
+
+        //fill rect
+        p3.setStyle(Paint.Style.FILL);
+        p3.setColor(Color.GRAY);
+        p6.setStyle(Paint.Style.FILL);
+
+
 
         //text
         pT = new Paint();
@@ -102,8 +108,8 @@ public class StageWidget implements GameWidget, View.OnTouchListener {
         zeroBmp = BitmapFactory.decodeResource(ctx.getResources(),R.drawable.zero);
 
         Bitmap bitmapl = BitmapFactory.decodeResource(ctx.getResources(),R.drawable.glassball3);
-        dk_shade = new BitmapShader(bitmapl, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
-        p3.setShader(dk_shade);
+        //dk_shade = new BitmapShader(bitmapl, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
+        //p3.setShader(dk_shade);
         Bitmap bitmapd = BitmapFactory.decodeResource(ctx.getResources(),R.drawable.white_square_wood);
         lt_shade = new BitmapShader(bitmapl, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
 
@@ -124,6 +130,7 @@ public class StageWidget implements GameWidget, View.OnTouchListener {
     boolean save = false;
     @Override
     public void draw(Canvas c) {
+        //background blur
         c.drawDoubleRoundRect(stageRectO1,0,0,stageRectO2,25,25,pO);
         if (scaleB) {
             c.save();
@@ -131,25 +138,31 @@ public class StageWidget implements GameWidget, View.OnTouchListener {
             c.translate(0.055f*width,.055f*height);
             save=true;
         }
+        //shadow
         c.drawDoubleRoundRect(stageRectO2,25,25,stageRectI2,25,25,p2);
+        //button outline
         c.drawRoundRect(stageRectI2,25,25,p);
+        //inner
         c.drawRoundRect(stageRectI2,25,25,p3);
         //c.drawRect(left + offsetX, top + offsetY, right + offsetX, bottom + offsetY, p2);
-        c.drawBitmap(stageBmp,null,txtRect,p4);
-        //c.drawText("STAGE 1",width/2,height/2,pT);
-        int std=stage;
-        int stdH = std/100;
-        c.drawBitmap(getNumberBmp(stdH), null, numRectOne, p4);
-        if (stdH>0)
-            std = (std - stdH*100);
-        int stdT = std/10;
-        c.drawBitmap(getNumberBmp(stdT), null, numRectTwo, p4);
-        if (stdT>0)
-            std = (std - 10*stdT);
-        c.drawBitmap(getNumberBmp(std),null,numRectThree,p4);
-        if (save) {
-            save = false;
-            c.restore();
+        if (stage == 0)
+            c.drawText("START",width/2,height/2,pT);
+        else {
+            c.drawBitmap(stageBmp,null,txtRect,p4);
+            int std = stage;
+            int stdH = std / 100;
+            c.drawBitmap(getNumberBmp(stdH), null, numRectOne, p4);
+            if (stdH > 0)
+                std = (std - stdH * 100);
+            int stdT = std / 10;
+            c.drawBitmap(getNumberBmp(stdT), null, numRectTwo, p4);
+            if (stdT > 0)
+                std = (std - 10 * stdT);
+            c.drawBitmap(getNumberBmp(std), null, numRectThree, p4);
+            if (save) {
+                save = false;
+                c.restore();
+            }
         }
     }
 
@@ -172,13 +185,13 @@ public class StageWidget implements GameWidget, View.OnTouchListener {
             case MotionEvent.ACTION_DOWN:
                 if (stageRectO2.contains(event.getX(),event.getY()-offset)) {
                     Log.d("v","down!");
-                    p3.setShader(lt_shade);
+                    //p3.setShader(lt_shade);
                     scaleB=true;
                 }
                 break;
             case MotionEvent.ACTION_UP:
                 Log.d("v","up!");
-                p3.setShader(dk_shade);
+                //p3.setShader(dk_shade);
                 scaleB=false;
                 if (stageRectO2.contains(event.getX(),event.getY()-offset)) {
                     Log.d("v","clock!");

@@ -15,14 +15,14 @@ public class GameContext {
 
     Context context;
     final static ThreadPoolExecutor threadExecutorPool = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-    int width;
-    int height;
+    public int width;
+    public int height;
     SurfaceHolder sh;
-    static GameContext gc;
+    public static GameContext gc;
     SceneManager sceneManager;
     Map<Integer,List<Types.TacticProblem>> ratedProblemMap;
     Map<Integer,List<Types.MatePuzzle>> matingPuzzleMap;
-    User user;
+    public User user;
 
     public static GameContext create(User user,Context ct, SurfaceHolder sh, SceneManager sceneManager) {
         if (gc == null)

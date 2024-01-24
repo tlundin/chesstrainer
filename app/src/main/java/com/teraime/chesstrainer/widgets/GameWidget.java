@@ -1,4 +1,4 @@
-package com.teraime.chesstrainer;
+package com.teraime.chesstrainer.widgets;
 
 import android.graphics.Canvas;
 

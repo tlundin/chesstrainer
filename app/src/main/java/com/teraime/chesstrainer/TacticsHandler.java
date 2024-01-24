@@ -2,14 +2,16 @@ package com.teraime.chesstrainer;
 
 import android.util.Log;
 
+import com.teraime.chesstrainer.scenes.GameScene;
+
 public class TacticsHandler implements MoveCallBack_I {
 
     private MoveList moveList;
     private DrawableGameWidget wBoard;
-    private Board board;
-    private GameView gv;
+    private BoardWidget board;
+    private GameScene gv;
 
-    public TacticsHandler(MoveList ml, GameView gv) {
+    public TacticsHandler(MoveList ml, GameScene gv) {
         this.moveList = ml;
         this.board = gv.getBoard();
         this.gv = gv;

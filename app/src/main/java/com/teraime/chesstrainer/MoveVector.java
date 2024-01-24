@@ -4,8 +4,8 @@ import android.graphics.Point;
 
 public class MoveVector {
 
-    Point[] mPoints;
-    float[] mScale;
+    public Point[] mPoints;
+    public float[] mScale;
 
     public MoveVector(Point[] mPoints, float[] mScale) {
         this.mPoints = mPoints;

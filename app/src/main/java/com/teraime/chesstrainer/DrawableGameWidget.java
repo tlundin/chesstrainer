@@ -1,24 +1,20 @@
 package com.teraime.chesstrainer;
 
 import android.graphics.Canvas;
-import android.util.Log;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import com.teraime.chesstrainer.widgets.GameWidget;
+
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-class DrawableGameWidget {
+public class DrawableGameWidget {
 
         final GameWidget mWidget;
         final Queue<GameAnimation> animations;
         final Queue<AnimationDoneListener> listenerMap;
         final int mOffset;
 
-        DrawableGameWidget(GameWidget widget, int offset) {
+        public DrawableGameWidget(GameWidget widget, int offset) {
                 mWidget = widget;
                 mOffset = offset;
                 animations = new ConcurrentLinkedQueue<>();

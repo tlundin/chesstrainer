@@ -7,9 +7,9 @@ public class User {
 
     String raw;
     String name;
-    int stage;
-    int rating;
-    int level;
+    public int stage;
+    public int rating;
+    public int level;
 
     public User() {
         try {

@@ -7,7 +7,7 @@ public class WidgetFactory {
         return  null;
     }
 
-    public Board getBoard() {
+    public BoardWidget getBoard() {
         //type normal, {color, chesset, borders, ...}
         return null;
     }

@@ -9,7 +9,8 @@ public class PathFactory {
 
     public enum Type {
         Linear,
-        Jump
+        Jump,
+        Square
     }
 
     public static MoveVector generate(Type type, Point movingPiecePosition, Point movingPieceDestination) {
@@ -42,6 +43,11 @@ public class PathFactory {
                     pointList[i] = new Point(movingPiecePosition.x + interval_X * i, movingPiecePosition.y + interval_Y * i);
                     scaleList[i] = h;
                 }
+                break;
+            case Square:
+                Log.d("hepp","poop");
+                break;
+
         }
         return new MoveVector(pointList,scaleList);
     }

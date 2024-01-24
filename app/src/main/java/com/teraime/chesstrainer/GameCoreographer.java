@@ -21,6 +21,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.teraime.chesstrainer.databinding.ActivityFullscreenBinding;
+import com.teraime.chesstrainer.widgets.GameWidget;
 
 import java.util.ArrayList;
 import java.util.Queue;

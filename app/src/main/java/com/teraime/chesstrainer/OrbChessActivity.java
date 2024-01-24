@@ -13,7 +13,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -23,6 +22,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.teraime.chesstrainer.databinding.ActivityFullscreenBinding;
+import com.teraime.chesstrainer.scenes.GameScene;
 
 import java.io.IOException;
 import java.util.Map;
@@ -85,7 +85,7 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
 
     private ActivityFullscreenBinding binding;
     private View.OnTouchListener mListener;
-    private GameView gameV;
+    private GameScene gameV;
     private boolean stageSelected = false;
 
     @Override
@@ -112,7 +112,7 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
                                       @Override
                                       public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
                                           mGameContext = GameContext.create(Tools.getUser(),context,surfaceHolder,OrbChessActivity.this);
-                                          gameV = new GameView(context, myDBH, scoreT, endB);
+                                          gameV = new GameScene(context, myDBH, scoreT, endB);
                                           GameCoreographer gameIntro = new GameCoreographer(mGameContext,binding);
                                           loop = new SceneLoop(mGameContext,gameIntro);
                                           StageGenerator stageGenerator = new StageGenerator(myDBH,mGameContext,OrbChessActivity.this);
@@ -154,7 +154,7 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
         });
         mContentView.setOnTouchListener((v, event) -> {
             if (mListener != null)
-                return mListener.onTouchhi(v,event);
+                return mListener.onTouch(v,event);
             return false;
         });
 
@@ -251,6 +251,7 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
                               gameV.removeStageWidget();
                               loop.start();
                               gameV.startStage(StageDescriptorFactory.getStageDescriptor(mGameContext.user.stage));
+
                           }
                       });
         }
@@ -349,7 +350,7 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
         }
     }
 
-    private void rotate(GameView gv, DrawableGameWidget bWidget){
+    private void rotate(GameScene gv, DrawableGameWidget bWidget){
             loop.stop();
             //loop.setSpeed(100);
             Move m1 = new Move(1, 2, 1, 3);
@@ -398,10 +399,10 @@ public class OrbChessActivity extends AppCompatActivity implements SceneManager,
     @Override
     public void done() {
         StageDescriptor x = StageDescriptorFactory.getStageDescriptor(1);
-        Map<Integer, Puzzle> y = x.levelMap;
-        y.forEach((k,v)->{
-            Log.d("v",""+k+" TYPE "+v.puzzleType);
-        });
+        Map<Integer, Puzzle> y = x.getLevelMap();
+        y.forEach((k,v)-> {
+                    Log.d("v", "" + k + " TYPE " + v.puzzleType);
+                });
         initDone.set(true);
         start();
     }
